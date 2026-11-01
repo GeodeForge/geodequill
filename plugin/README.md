@@ -9,6 +9,8 @@ Writes in a saved voice and personality, lets you pick from your saved voices, a
 3. Say "write this in my voice", or paste text and say "make this sound like me".
 4. Say "stay in my voice" to keep the voice for the rest of the conversation.
 
+AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at https://github.com/anthropics/skills). To make sure it's used, start with "Use GeodeQuill to…".
+
 A tone changes how a voice speaks, not who is speaking. Twelve come built in: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic and persuasive. You can describe your own and save it.
 
 You can keep several voices: a work voice, a casual voice, a character. Each voice keeps two sets of habits, written and spoken. Speeches, scripts and casual replies use the spoken set.
@@ -54,7 +56,7 @@ Add the skill on chatgpt.com. OpenAI's help page counts the website and the phon
 
 Chat apps that accept neither skills nor MCP connectors cannot load GeodeQuill. ChatGPT plans without skills cannot add it; OpenAI's help pages disagree on which plans those are. The MCP connector does not work in ChatGPT, which takes connectors only from a server on the internet; ChatGPT users use the skill instead.
 
-The checks are built for English. GeodeQuill can write in other languages, but it can't check those drafts.
+GeodeQuill writes in any language. The checker measures punctuation, layout and paragraph rhythm in any language and script, and sentence rhythm wherever the script marks where sentences end (Thai, Lao and Tibetan do not). Its lists of machine-writing phrases and words cover English, Chinese (simplified and traditional) and Spanish; for other languages its report says those were not checked.
 
 ## How it was checked
 
@@ -63,6 +65,8 @@ The checker was run over three collections of human writing: 23 books by Mark Tw
 ## Credits
 
 The tell list builds on Wikipedia's "Signs of AI writing" catalogue (WikiProject AI Cleanup) and the idea behind existing humanizer skills such as blader/humanizer. Common tone presets (formal, casual, friendly, confident, empathetic, persuasive and others, with a strength setting) are standard across writing tools; GeodeQuill layers them on a measured voice. GeodeQuill adds saved, measured voices with written and spoken habits, the voice and tone pickers, and the checker.
+
+The Chinese list takes its categories from Humanizer-zh (op7418) and the Spanish list is adapted from Signs of AI Writing (PeopleWorks), both MIT. The Spanish common words used to tell languages apart come from the Snowball stop-word list (BSD). The traditional-Chinese table was generated with OpenCC. The notices are in `skills/geodequill/LICENSE.txt`.
 
 ## Feedback
 

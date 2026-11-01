@@ -1,8 +1,10 @@
 # Voices of real, named people
 
+First run `voices`. If the person is already a built-in voice, use it, unless the user asks for a fresh build from other sources.
+
 ## 1. Decide whether you may search
 
-- **Public-domain author.** The person's works are in the public domain where the user is. Rule of thumb for the United States as of 2026: works published in 1930 or earlier. Rules differ by country. You may search for the person's written and spoken work. Go to section 2.
+- **Public-domain author.** The person's works are in the public domain where the user is. Rule of thumb for the United States: works published more than 95 years before the current year (1930 or earlier in 2026). Rules differ by country. You may search for the person's written and spoken work. Go to section 2.
 - **Living or recently dead public figure.** Do not search for their work. Their articles, books, and interviews are copyrighted. The user may supply samples they have the right to use. The profile keeps measurements and at most five short phrases per register, never passages. Go to section 4.
 - **Private person.** Do not build their voice from material gathered about them. Their own writing, supplied by them, is fine.
 - **Unsure.** Treat the person as not public domain.

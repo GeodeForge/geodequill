@@ -5,6 +5,10 @@ things you wrote yourself, keeps your voices and tones to pick from, and writes 
 text in them. It runs inside the AI app you already use: ChatGPT, Claude, Codex, Copilot,
 Gemini CLI, Cursor and others that read skills.
 
+It also comes with five built-in voices measured from public-domain works: Mark Twain, Jane
+Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Each profile lists its sources, in
+`plugin/skills/geodequill/voices/`.
+
 A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
 **https://geodeforge.com/geodequill/**
 
@@ -16,7 +20,11 @@ A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
   gives a score.
 - Invent memories, quotes, numbers or opinions and put them in your mouth.
 - Use tricks such as invisible characters or planted typos.
-- Check other languages, yet. The checker is built for English; drafts in other languages go unchecked.
+- Check every language the same way. It writes in any language. It looks for machine-writing phrases in
+  English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation,
+  layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai,
+  Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check
+  didn't run.
 
 ## What's in here
 
@@ -30,6 +38,7 @@ A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
 
 Claude Code can install straight from this repository:
 `/plugin marketplace add GeodeForge/geodequill`, then `/plugin install geodequill@geodeforge`.
+To update later, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. Saved voices and tones are never touched by an update.
 
 ## Check for yourself
 

@@ -6,6 +6,7 @@ Save as `<name>.md` in the personal voices folder, or in the project's `voice-pr
 ---
 voice: <name>
 built: <date>
+language: <the language code from the stats output, such as en, zh or es>
 samples: written <number of pieces>, about <number> words; spoken <number of pieces>, about <number> words
 ---
 

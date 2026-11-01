@@ -12,7 +12,8 @@ Run by an AI tool that speaks MCP, over standard input and output:
 
 Needs the MCP Python package (pip install mcp) and the geodequill skill folder
 beside this file, or GEODEQUILL_SKILL set to that folder. Saved voices live in
-~/.geodequill/voices, or in GEODEQUILL_HOME/voices when that is set."""
+~/.geodequill/voices, or in GEODEQUILL_HOME/voices when that is set. Built-in voices of
+public-domain authors come with the skill folder."""
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -82,9 +83,10 @@ def get_instructions(part: str = "main") -> str:
     return vc.read_text(os.path.join(SKILL, rel)) or "That part is missing from the skill folder."
 
 
-@server.tool(description="List saved voices to choose from: name, one-line description, whether it has "
-                         "written and spoken habits, and its file. Show them to the user as a numbered "
-                         "list in the reply and ask which to use.")
+@server.tool(description="List voices to choose from: the user's own, then the built-in voices of "
+                         "public-domain authors (built_in true). Each has a name, one-line description, "
+                         "whether it has written and spoken habits, and its file. Show them to the user "
+                         "as a numbered list in the reply and ask which to use.")
 def list_voices() -> str:
     dirs, found = vc.find_voices()
     return json.dumps({"searched": dirs, "voices": found}, indent=2)
@@ -143,9 +145,10 @@ def save_tone(name: str, summary: str, moves: str = "", guidance: str = "", over
 
 @server.tool(description="Check a draft for machine-writing habits and, when a voice is named, compare it "
                          "with that voice's habits. register is written or spoken. tone, when one was "
-                         "chosen, stops the tone's own shifts being flagged as off-voice. Fix what the "
+                         "chosen, stops the tone's own shifts being flagged as off-voice. language is a code "
+                         "such as en, zh or es; leave it empty to read it from the text. Fix what the "
                          "report flags; do not show the report to the user.")
-def check_draft(text: str, voice: str = "", register: str = "written", tone: str = "") -> str:
+def check_draft(text: str, voice: str = "", register: str = "written", tone: str = "", language: str = "") -> str:
     if register not in ("written", "spoken"):
         return "register must be written or spoken"
     profile, ptxt = None, None
@@ -153,18 +156,19 @@ def check_draft(text: str, voice: str = "", register: str = "written", tone: str
         path = voice_path(voice)
         profile = path or voice
         ptxt = vc.read_text(path) if path else None
-    return vc.scan_report(text, ptxt, profile, register, tone or None)
+    return vc.scan_report(text, ptxt, profile, register, tone or None, language or None)
 
 
 @server.tool(description="Measure writing samples for a voice profile. Pass one register at a time: all "
                          "the written samples, or all the spoken ones. Returns habit numbers, suggested "
-                         "ranges for the profile's targets, and word-level habits.")
-def measure_samples(samples: list[str]) -> str:
+                         "ranges for the profile's targets, and word-level habits. language is a code such as "
+                         "en, zh or es; leave it empty to read it from the samples.")
+def measure_samples(samples: list[str], language: str = "") -> str:
     texts = [s for s in samples if s and s.strip()]
     if not texts:
         return "Give at least one sample."
-    return json.dumps({"stats": vc.stats_result(texts, targets=True),
-                       "habits": vc.habits_result(texts)}, indent=2)
+    return json.dumps({"stats": vc.stats_result(texts, targets=True, lang=language or None),
+                       "habits": vc.habits_result(texts, language or None)}, indent=2, ensure_ascii=False)
 
 
 @server.prompt(description="Load GeodeQuill's instructions for writing in a saved voice.")

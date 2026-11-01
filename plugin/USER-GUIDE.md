@@ -13,6 +13,8 @@ Get the files from geodeforge.com/geodequill/. Then pick the line for the AI you
 - **Codex, GitHub Copilot, Gemini CLI, Cursor and other tools that use skills:** unzip the file that starts with `geodequill-skill` into the tool's skills folder. Your tool's help pages say where that folder is.
 - **Tools that use MCP connectors** (such as Claude Desktop, Cursor, VS Code): see the README that comes with the file that starts with `geodequill-mcp`.
 
+**Updating from an earlier version.** Your saved voices and tones stay where they are; updating never touches them. Add the new file the same way you added the first one. If your app says a skill with that name already exists, delete the old one, then add the new one. In Claude Code, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. In other tools, replace the old skill folder with the new one.
+
 ## 2. On a phone or tablet
 
 - **ChatGPT:** add GeodeQuill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. The ChatGPT desktop app needs it added separately.
@@ -37,15 +39,17 @@ At the end it writes a short test paragraph and asks whether it sounds like you.
 
 If a real example or number would make the piece better, it asks you for one instead of making it up.
 
+AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at github.com/anthropics/skills). To make sure it's used, start with **"Use GeodeQuill to…"**, for example **"Use GeodeQuill to write a thank-you note like Jane Austen."**
+
 ## 5. Pick a voice or a tone
 
-- **"List my voices"** shows your saved voices as a numbered list. Answer with a number or a name.
+- **"List my voices"** shows your saved voices, then the built-in ones, as a numbered list. Answer with a number or a name.
 - **"List tones"** shows the tones: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic and persuasive.
 - Or just name one: **"in a formal tone"**, **"make it slightly warmer"**, **"very casual"**.
 
 A tone changes how your voice speaks, not who is speaking. You can describe a tone of your own and ask GeodeQuill to save it.
 
-You can keep several voices: a work voice, a casual voice, a character. You can also build a voice from a famous author whose books are free of copyright, such as Mark Twain. Writing in a real person's voice is always labelled "in the style of" them.
+You can keep several voices: a work voice, a casual voice, a character. GeodeQuill also comes with five built-in voices of famous authors whose books are free of copyright: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Say **"write this like Jane Austen"**, or pick one from the list. You can build others the same way. Writing in a real person's voice is always labelled "in the style of" them.
 
 ## 6. Where your voices are kept
 
@@ -58,12 +62,13 @@ On your computer, in a folder named `.geodequill` inside your home folder. Every
 - It won't promise to get past AI detectors. They guess, and they're often wrong.
 - It won't invent memories, quotes, numbers or opinions and put them in your mouth.
 - It won't use tricks like invisible characters or deliberate typos.
-- It checks English only, for now. It can write in other languages, but it can't check those drafts.
+- It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run.
 
 ## 8. If something seems off
 
 - **It doesn't sound like you:** give it more samples, especially casual ones, and say "update my voice".
 - **It asks to set up a voice when you already have one:** in ChatGPT, attach your saved voice file first. Elsewhere, say "list my voices" to check it's there.
+- **It doesn't seem to be using GeodeQuill** (no voice, no "in the style of" label, no note at the end): start the request with "Use GeodeQuill to…".
 - **It says it can't run its checker:** the tool has no Python. GeodeQuill still works and checks the draft by reading it instead.
 
 ## 9. Tell us what's wrong

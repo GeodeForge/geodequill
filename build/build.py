@@ -3,7 +3,8 @@
 
 Run from anywhere:  python3 -I build/build.py YYYY-MM-DD
 The date is the release date. It is printed on the page and stamped on every file in the
-archives, so the same sources and date always give byte-identical downloads.
+archives, so the same sources and date give byte-identical downloads on the same Python
+(another zlib build can compress differently; the files inside stay identical).
 """
 import datetime
 import html

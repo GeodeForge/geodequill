@@ -47,7 +47,7 @@ def summary(out):
 
 
 def scratch(content, mode="w", suffix=".txt"):
-    f = tempfile.NamedTemporaryFile(mode, suffix=suffix, delete=False)
+    f = tempfile.NamedTemporaryFile(mode, suffix=suffix, delete=False, encoding=None if "b" in mode else "utf-8")
     f.write(content)
     f.close()
     return f.name
@@ -137,6 +137,25 @@ class Robustness(unittest.TestCase):
         self.assertEqual(run("scan", fx("human.txt"), "--register", "shouting")[0], 2)
 
 
+class ShortPieces(unittest.TestCase):
+    """A spread measure (how much paragraph or sentence lengths vary) means nothing for one paragraph or
+    one sentence. Found in the first live run, 2026-11-01: every one-paragraph speech was flagged for
+    "paragraph_cv", whatever was written."""
+
+    def test_one_paragraph_is_not_judged_on_paragraph_spread(self):
+        profile = scratch('```json\n{"targets": {"paragraph_cv": [0.2, 0.9], "sentence_cv": [0.2, 1.0]}}\n```\n', suffix=".md")
+        piece = scratch("One sentence stands here. Another follows it, a little longer than the first one was. A third ends it.\n")
+        _code, out = run("scan", piece, "--profile", profile)
+        self.assertIn("paragraph_cv: 0.0 (profile 0.2 to 0.9) not judged: needs 3 or more paragraphs", out)
+        self.assertIn("0 habits off", out)
+
+    def test_three_paragraphs_are_judged(self):
+        profile = scratch('```json\n{"targets": {"paragraph_cv": [0.5, 0.9]}}\n```\n', suffix=".md")
+        piece = scratch("Two words.\n\nTwo more.\n\nAnd two.\n")
+        _code, out = run("scan", piece, "--profile", profile)
+        self.assertIn("paragraph_cv: 0.0 (profile 0.5 to 0.9) OUTSIDE", out)
+
+
 class Registers(unittest.TestCase):
     def test_spoken_comparison_is_labelled_spoken(self):
         _code, out = run("scan", fx("spoken.txt"), "--profile", fx("profile-registers.md"), "--register", "spoken")
@@ -197,9 +216,297 @@ class Measuring(unittest.TestCase):
         self.assertTrue(all(v >= 2 * 10000 / d["words"] - 1 for v in d["common_words_per_10k"].values()))
 
 
+BUILT_IN = ["abraham-lincoln", "charles-dickens", "jane-austen", "mark-twain", "oscar-wilde"]
+
+
+class Languages(unittest.TestCase):
+    """Any language and script: the product's English is not the user's.
+
+    zh-human.txt is Lu Xun, 从百草园到三味书屋 (1926, public domain); es-human.txt is Galdós,
+    Misericordia (1897, public domain, from the CoNSSA corpus). zh-machine.txt and es-machine.txt are
+    imitations of machine prose written by the building session, like machine.txt. ja.txt and fr.txt were
+    written by the session too and test only that the language is named, never that a writer is human.
+    Before this, Chinese text was split into sentences only at .!? and its words were counted by spaces,
+    so a whole Chinese paragraph was one "word" and every tell list was English.
+    """
+
+    def test_chinese_machine_prose_is_caught_with_chinese_lists(self):
+        code, out = run("scan", fx("zh-machine.txt"))
+        strong, weak, _fmt, _off = summary(out)
+        self.assertEqual(code, 0)
+        self.assertIn("Checked as: Chinese", out)
+        self.assertIn("counted in characters", out)
+        self.assertGreaterEqual(strong, 8)
+        for found in ("在当今社会", "希望这对你有帮助", "不仅仅是一种工具，更是", "可能也许"):
+            self.assertIn(found, out)
+
+    def test_chinese_human_prose_is_clean_and_measured_in_characters(self):
+        _code, out = run("scan", fx("zh-human.txt"))
+        self.assertEqual(summary(out)[0], 0)
+        m = json.loads(run("stats", fx("zh-human.txt"))[1])
+        self.assertEqual((m["language"], m["counted_in"]), ("zh", "characters"))
+        self.assertGreater(m["words"], 500)
+        self.assertGreaterEqual(m["sentences"], 15)
+        self.assertNotIn("contractions_per_100w", m)
+
+    def test_chinese_sentences_end_at_chinese_marks_without_spaces(self):
+        # The common Chinese splitting rule ends a sentence after 。！？ and any closing quote, so “好！” and
+        # 他说。 count as two, as Chinese segmenters do; a blank line also ends one.
+        m = json.loads(run("stats", scratch("我来了。你呢？“好！”他说。今天下雨\n\n明天晴。", suffix=".txt"))[1])
+        self.assertEqual(m["sentences"], 6)
+
+    def test_spanish_machine_prose_is_caught_and_galdos_is_not(self):
+        _code, out = run("scan", fx("es-machine.txt"))
+        self.assertIn("Checked as: Spanish", out)
+        self.assertGreaterEqual(summary(out)[0], 8)
+        self.assertIn("no se trata solo de", out)
+        _code, out = run("scan", fx("es-human.txt"))
+        self.assertIn("Checked as: Spanish", out)
+        self.assertEqual(summary(out)[0], 0)
+
+    def test_a_language_without_lists_says_so_instead_of_a_clean_result(self):
+        for name, lang in (("ja.txt", "Japanese"), ("fr.txt", "French")):
+            _code, out = run("scan", fx(name))
+            self.assertIn(f"Checked as: {lang}", out)
+            self.assertIn("NOT checked", out)
+            self.assertIn("Phrases and stock words were not checked for this language.", out)
+            self.assertNotIn("\nnone found\n", out)
+
+    def test_words_with_accents_and_vowel_signs_are_one_word_each(self):
+        m = json.loads(run("stats", scratch("Việt Nam là một quốc gia.\n\nहिन्दी भाषा सुंदर है।", suffix=".txt"))[1])
+        self.assertEqual(m["words"], 10)
+        self.assertEqual(m["sentences"], 2)
+
+    def test_a_mixed_piece_reports_what_it_checked(self):
+        text = "我们用 Docker 部署了 Python 服务，然后在 Kubernetes 上做了压力测试。结果比预想的好。" * 3
+        _code, out = run("scan", scratch(text, suffix=".txt"))
+        self.assertIn("Checked as: Chinese", out)
+        self.assertIn("Other scripts in the text, not checked against any list: Latin", out)
+
+    def test_a_few_chinese_characters_do_not_claim_to_rule_out_japanese(self):
+        _code, out = run("scan", scratch("関数", suffix=".txt"))
+        self.assertIn("too short to rule out Japanese", out)
+
+    def test_lang_sets_the_language_and_a_bad_code_is_refused(self):
+        _code, out = run("scan", fx("human.txt"), "--lang", "es")
+        self.assertIn("Checked as: Spanish (chosen with --lang)", out)
+        code, out = run("scan", fx("human.txt"), "--lang", "not a code")
+        self.assertEqual(code, 2)
+
+    def test_an_english_voice_judges_only_language_free_measures_on_chinese(self):
+        _code, out = run("scan", fx("zh-human.txt"), "--profile", fx("twain-corpus-profile.md"))
+        self.assertIn("measured in English and this text is Chinese", out)
+        self.assertIn("avg_sentence_words", out)
+        self.assertRegex(out, r"avg_sentence_words: [\d.]+ \(profile [\d.]+ to [\d.]+\) not judged: different language")
+        self.assertRegex(out, r"sentence_cv: [\d.]+ \(profile [\d.]+ to [\d.]+\) (ok|OUTSIDE)")
+
+    def test_a_chinese_voice_can_be_measured_and_listed(self):
+        m = json.loads(run("stats", fx("zh-human.txt"), "--targets")[1])
+        t = m["suggested"]["targets"]
+        self.assertIn("first_person_per_100w", t)
+        self.assertNotIn("contractions_per_100w", t)
+        with tempfile.TemporaryDirectory() as home:
+            os.makedirs(os.path.join(home, "voices"))
+            with open(os.path.join(home, "voices", "lu.md"), "w", encoding="utf-8") as f:
+                f.write("voice: Lu\nlanguage: zh\n\n## In one line\nPlain.\n\n```json\n"
+                        + json.dumps({"targets": t}) + "\n```\n")
+            _code, out = run("voices", env={"GEODEQUILL_HOME": home})
+            self.assertIn("(written, in Chinese)", out)
+            _code, out = run("scan", fx("zh-human.txt"), "--profile", os.path.join(home, "voices", "lu.md"))
+            self.assertNotIn("different language", out)
+            self.assertEqual(summary(out)[3], 0)
+
+    def test_unlisted_latin_languages_never_get_english_or_spanish_lists(self):
+        # Preamble paragraphs of eight translations of the Universal Declaration of Human Rights:
+        # OHCHR translations, via the Unicode "UDHR in Unicode" project and the udhr npm package. In 0.5.0 before the review, Turkish, Swedish and others were "English is assumed"
+        # and given a clean English result; Polish was confidently named English.
+        with open(fx("udhr-preambles.json"), encoding="utf-8") as f:
+            texts = json.load(f)
+        for code, text in texts.items():
+            _code, out = run("scan", scratch(text, suffix=".txt"))
+            self.assertNotIn("Machine-writing habit lists: English", out, code)
+            self.assertNotIn("Machine-writing habit lists: Spanish", out, code)
+            self.assertIn("Phrases and stock words were not checked for this language.", out, code)
+
+    def test_traditional_characters_get_the_chinese_lists(self):
+        # zh-machine-trad.txt is zh-machine.txt converted with OpenCC s2tw. Before the fix: 0 tells.
+        simp = summary(run("scan", fx("zh-machine.txt"))[1])[0]
+        trad = summary(run("scan", fx("zh-machine-trad.txt"))[1])[0]
+        self.assertEqual(trad, simp)
+        self.assertIn("發揮著至關重要的作用", run("scan", fx("zh-machine-trad.txt"))[1])
+
+    def test_a_contrast_pile_up_counts_once_and_a_single_contrast_does_not(self):
+        two = "这不是速度问题，而是方向问题。我们要的不是更多功能，而是更少的打扰。"
+        one = "错误发生在保存阶段，不是上传阶段，而是在写入磁盘的时候。后来我们换了一块硬盘，问题就没再出现过。"
+        self.assertIn("contrast pile-up", run("scan", scratch(two, suffix=".txt"))[1])
+        self.assertNotIn("contrast pile-up", run("scan", scratch(one, suffix=".txt"))[1])
+
+    def test_chinese_typed_with_half_width_marks_still_splits(self):
+        m = json.loads(run("stats", scratch("我来了.你呢?好!", suffix=".txt"))[1])
+        self.assertEqual(m["sentences"], 3)
+
+    def test_language_names_and_codes_are_understood(self):
+        _code, out = run("scan", fx("zh-human.txt"), "--lang", "Chinese")
+        self.assertIn("Checked as: Chinese (chosen with --lang)", out)
+        for line in ('language: "zh"', "Language: zh", "language: zho", "language: Chinese"):
+            prof = scratch(line + "\n\n```json\n{\"targets\": {\"sentence_cv\": [0, 5]}}\n```\n", suffix=".md")
+            _code, out = run("scan", fx("zh-human.txt"), "--profile", prof)
+            self.assertNotIn("different language", out, line)
+
+    def test_a_voice_in_an_unidentified_script_is_not_read_back_as_english(self):
+        ru = ("Вчера я долго гулял по городу. Было холодно, но солнечно. Я зашёл в маленькое кафе. "
+              "Там пахло кофе и свежим хлебом. Официантка улыбнулась и принесла меню.\n\n") * 3
+        m = json.loads(run("stats", scratch(ru, suffix=".txt"), "--targets")[1])
+        self.assertEqual(m["language"], "und-cyrillic")
+        prof = scratch("language: " + m["language"] + "\n\n```json\n" +
+                       json.dumps({"targets": m["suggested"]["targets"]}) + "\n```\n", suffix=".md")
+        _code, out = run("scan", scratch(ru, suffix=".txt"), "--profile", prof)
+        self.assertNotIn("different language", out)
+
+    def test_a_voice_and_a_draft_in_the_same_unnamed_language_are_judged_as_one(self):
+        # The agent always names the draft's language with --lang (SKILL.md). A voice built without
+        # --lang records "und-cyrillic"; before the fix, "und-cyrillic" voice against a "--lang ru"
+        # draft (and the reverse) counted as two languages, so 5 of 8 measures went unjudged.
+        ru = ("Вчера я долго гулял по городу. Было холодно, но солнечно. Я зашёл в маленькое кафе. "
+              "Там пахло кофе и свежим хлебом. Официантка улыбнулась и принесла меню.\n\n") * 3
+        draft = scratch(ru, suffix=".txt")
+        t = json.loads(run("stats", draft, "--targets")[1])["suggested"]["targets"]
+        for voice, lang in (("und-cyrillic", ["--lang", "ru"]), ("ru", []), ("Russian", [])):
+            prof = scratch(f"language: {voice}\n\n```json\n" + json.dumps({"targets": t}) + "\n```\n", suffix=".md")
+            _code, out = run("scan", draft, "--profile", prof, *lang)
+            self.assertNotIn("different language", out, voice)
+        prof = scratch("language: en\n\n```json\n" + json.dumps({"targets": t}) + "\n```\n", suffix=".md")
+        self.assertIn("different language", run("scan", draft, "--profile", prof)[1])
+        prof = scratch("language: und-arabic\n\n```json\n" + json.dumps({"targets": t}) + "\n```\n", suffix=".md")
+        self.assertIn("different language", run("scan", draft, "--profile", prof)[1])
+
+    def test_short_text_that_is_only_assumed_english_says_its_phrases_may_be_unchecked(self):
+        # Under 20 words the language often cannot be told, and English is assumed. Before the fix a
+        # short Turkish or Swedish note came back "none found" with nothing to say English lists had
+        # been used on it.
+        _code, out = run("scan", scratch("Yarın sabah toplantıya geliyorum, görüşürüz.", suffix=".txt"))
+        self.assertIn("English was assumed, not identified", out)
+        for text in ("Jag kommer till mötet i morgon bitti.", "Hẹn gặp lại bạn vào sáng mai nhé.",
+                     "Rytoj ryte ateisiu į susitikimą, iki pasimatymo."):
+            line = [l for l in run("scan", scratch(text, suffix=".txt"))[1].splitlines() if l.startswith("Summary:")][0]
+            self.assertTrue("English was assumed" in line or "not checked for this language" in line, line)
+        _code, out = run("scan", scratch("Jag kommer till mötet i morgon bitti.", suffix=".txt"), "--lang", "en")
+        self.assertNotIn("English was assumed", out)
+
+    def test_accents_typed_as_separate_marks_are_read_the_same(self):
+        # Some keyboards and PDF copies store "é" as "e" plus a combining accent. Before the fix the
+        # Spanish fixture typed that way lost a tell, and decomposed Vietnamese could not be told.
+        import unicodedata
+        with open(fx("es-machine.txt"), encoding="utf-8") as f:
+            text = f.read()
+        self.assertEqual(summary(run("scan", scratch(unicodedata.normalize("NFD", text), suffix=".txt"))[1]),
+                         summary(run("scan", fx("es-machine.txt"))[1]))
+
+    def test_every_chinese_list_item_is_caught_in_traditional_characters(self):
+        # zh-list-traditional.json is written by build/zh_traditional.py: every Chinese list item and
+        # its OpenCC s2t, s2tw, s2hk and s2twp forms. Adding a list item without re-running that
+        # script fails here, and so does any traditional form the table misses. In the first 0.5.1
+        # candidate 5 of 7 newly added phrases missed (穩 結 願 並 were not in the table).
+        sys.dont_write_bytecode = True
+        sys.path.insert(0, os.path.dirname(SCRIPT))
+        try:
+            import voice_check as vc
+        finally:
+            sys.path.pop(0)
+        with open(fx("zh-list-traditional.json"), encoding="utf-8") as f:
+            data = json.load(f)["items"]
+        self.assertEqual([i for i, _ in data["words"]], vc.ZH_WORDS.pattern.split("|"))
+        self.assertEqual([i for i, _ in data["phrases"]], list(vc.ZH_PHRASES))
+        self.assertEqual([i for i, _ in data["mild"]], list(vc.ZH_MILD))
+        self.assertEqual(len(data["patterns"]), len(vc.ZH_PATTERNS))
+        labels = [label for label, _rx in vc.ZH_PATTERNS]
+        for kind, rows in data.items():
+            for n, (item, forms) in enumerate(rows):
+                for text in [item] + forms:
+                    hits, mild = vc.find_tells(text * 2 if kind == "contrast" else text, "zh")
+                    kinds = [h[1] for h in hits]
+                    caught = {"words": "stock word" in kinds, "phrases": "stock phrase" in kinds,
+                              "mild": bool(mild), "contrast": any(k.startswith("contrast pile-up") for k in kinds),
+                              "patterns": kind == "patterns" and labels[n] in kinds}[kind]
+                    self.assertTrue(caught, f"{kind}: {text}")
+
+    def test_a_file_not_saved_as_utf8_says_so(self):
+        path = scratch("我们今天去公园。".encode("gbk"), mode="wb")
+        _code, out = run("scan", path)
+        self.assertIn("is not saved as UTF-8", out)
+        _code, out = run("stats", path)
+        self.assertIn("warnings", json.loads(out))
+
+    def test_utf16_with_a_byte_order_mark_is_read(self):
+        path = scratch("我们今天去公园。天气很好。".encode("utf-16"), mode="wb")
+        self.assertIn("Checked as: Chinese", run("scan", path)[1])
+        with open(fx("zh-machine.txt"), encoding="utf-8") as f:
+            text = f.read()
+        # UTF-32 also starts FF FE; it was read as UTF-16 and came back "0 strong tells" unread.
+        self.assertEqual(summary(run("scan", scratch(text.encode("utf-32"), mode="wb"))[1]),
+                         summary(run("scan", fx("zh-machine.txt"))[1]))
+
+    def test_old_mac_and_windows_line_endings_read_the_same(self):
+        # Reading raw bytes for the encoding fix stopped line endings being converted: a file with
+        # carriage returns only lost its paragraphs, and one starting with a heading read as no words.
+        with open(fx("machine.txt"), encoding="utf-8") as f:
+            text = f.read()
+        want = json.loads(run("stats", fx("machine.txt"))[1])
+        for ending in ("\r", "\r\n"):
+            got = json.loads(run("stats", scratch(text.replace("\n", ending).encode("utf-8"), mode="wb"))[1])
+            self.assertEqual((got["words"], got["paragraph_cv"]), (want["words"], want["paragraph_cv"]), repr(ending))
+
+    def test_a_language_code_with_a_note_after_it_is_understood(self):
+        for line in ("language: zh (simplified)", "language: es (Spain)", "language: zh,"):
+            prof = scratch(line + "\n\n```json\n{\"targets\": {\"avg_sentence_words\": [0, 99]}}\n```\n", suffix=".md")
+            out = run("scan", fx("zh-human.txt" if "zh" in line else "es-human.txt"), "--profile", prof)[1]
+            self.assertNotIn("different language", out, line)
+
+    def test_long_unbroken_text_is_fast(self):
+        # One 128,000-character Chinese paragraph took 80 s before the e-mail pattern was made linear.
+        path = scratch("我们的发展社会问题时间工作文化经济" * 7600, suffix=".txt")
+        import time
+        start = time.time()
+        code, _out = run("scan", path)
+        self.assertEqual(code, 0)
+        self.assertLess(time.time() - start, 10)
+
+    def test_a_console_that_is_not_utf8_still_gets_a_report(self):
+        # run() uses -I, which ignores PYTHONIOENCODING, so the console is forced to cp1252 here instead.
+        # Before this repair the test passed with the fix removed.
+        wrap = ("import io,runpy,sys;sys.stdout=io.TextIOWrapper(sys.stdout.buffer,encoding='cp1252');"
+                "sys.argv=sys.argv[1:];runpy.run_path(sys.argv[0],run_name='__main__')")
+        p = subprocess.run([sys.executable, "-I", "-B", "-c", wrap, SCRIPT, "habits", fx("zh-human.txt")], capture_output=True)
+        code, out = p.returncode, p.stdout.decode("utf-8", "replace") + p.stderr.decode("utf-8", "replace")
+        self.assertEqual(code, 0)
+        self.assertIn('"words"', out)
+        self.assertIn('"language_how"', out)
+
+    def test_scripts_without_sentence_marks_do_not_claim_sentence_measures(self):
+        _code, out = run("scan", scratch("ภาษาไทยเป็นภาษาราชการของประเทศไทย มีผู้พูดหลายล้านคน\n", suffix=".txt"))
+        self.assertIn("sentence measures were not taken", out)
+        self.assertIn("Paragraph rhythm, punctuation and layout were.", out)
+        self.assertNotIn("sentence_cv", out)
+
+    def test_japanese_does_not_list_its_own_kana_as_other_scripts(self):
+        _code, out = run("scan", fx("ja.txt"))
+        self.assertNotIn("Other scripts", out)
+
+    def test_a_huge_report_is_capped(self):
+        _code, out = run("scan", scratch("It is important to note this.\n" * 600, suffix=".txt"))
+        self.assertIn("more (counted in the summary)", out)
+        self.assertEqual(summary(out)[0], 600)
+
+    def test_the_languages_command_names_every_list(self):
+        _code, out = run("languages")
+        for words in ("en  English", "zh  Chinese", "es  Spanish", "no lists yet"):
+            self.assertIn(words, out)
+
+
 class Voices(unittest.TestCase):
     """The picker shows every stored voice, from the project folder and the personal folder
-    that every AI tool on the computer shares, and never touches the real home folder."""
+    that every AI tool on the computer shares, then the built-in voices that ship with the skill,
+    and never touches the real home folder."""
 
     def setUp(self):
         self.home = tempfile.mkdtemp()
@@ -210,10 +517,15 @@ class Voices(unittest.TestCase):
         shutil.rmtree(self.home)
         shutil.rmtree(self.project)
 
-    def test_nothing_saved_says_where_it_looked(self):
+    def test_nothing_saved_says_where_it_looked_and_still_offers_the_built_in_voices(self):
         _code, out = run("voices", env=self.env, cwd=self.project)
-        self.assertIn("No saved voices", out)
+        self.assertIn("No voices of your own saved yet", out)
         self.assertIn(os.path.join(self.home, "voices"), out)
+        self.assertIn("1. abraham-lincoln (built in): Abraham Lincoln (public domain)", out)
+        _code, out = run("voices", "--json", env=self.env, cwd=self.project)
+        listed = json.loads(out)["voices"]
+        self.assertEqual([v["name"] for v in listed], BUILT_IN)
+        self.assertTrue(all(v["built_in"] for v in listed))
 
     def test_personal_and_project_voices_are_both_listed_with_their_habits(self):
         os.makedirs(os.path.join(self.home, "voices"))
@@ -226,7 +538,51 @@ class Voices(unittest.TestCase):
         self.assertIn("2. twain-corpus: A first-person storyteller", out)
         _code, out = run("voices", "--json", env=self.env, cwd=self.project)
         names = [v["name"] for v in json.loads(out)["voices"]]
-        self.assertEqual(names, ["talky", "twain-corpus"])
+        self.assertEqual(names, ["talky", "twain-corpus"] + BUILT_IN)
+
+    def test_your_own_voice_hides_a_built_in_of_the_same_name(self):
+        os.makedirs(os.path.join(self.home, "voices"))
+        shutil.copy(fx("twain-corpus-profile.md"), os.path.join(self.home, "voices", "mark-twain.md"))
+        _code, out = run("voices", "--json", env=self.env, cwd=self.project)
+        listed = json.loads(out)["voices"]
+        mine = [v for v in listed if not v["built_in"]]
+        self.assertEqual([os.path.basename(v["file"]) for v in mine], ["mark-twain.md"])
+        self.assertNotIn("mark-twain", [v["name"] for v in listed if v["built_in"]])
+        self.assertEqual(len(listed), len(BUILT_IN))
+
+    def test_every_built_in_voice_is_complete_and_honest_about_its_sources(self):
+        folder = os.path.join(SKILL, "voices")
+        self.assertEqual(sorted(n[:-3] for n in os.listdir(folder)), BUILT_IN)
+        for name in BUILT_IN:
+            text = open(os.path.join(folder, name + ".md"), encoding="utf-8").read()
+            self.assertRegex(text, r"(?m)^voice: " + name + r"$")
+            self.assertIn("(public domain)", text)
+            self.assertIn('present the text as "in the style of', text)
+            self.assertIn("Never: put an invented quotation in", text)
+            self.assertRegex(text, r"(?m)^## Sources\n(- .+\| (written|spoken) \| .+\n)+")
+            self.assertIn("Not measured:", text)
+            targets = json.loads(re.search(r"```json\n(.*?)\n```", text, re.S).group(1))
+            spoken = "## Spoken habits" in text
+            self.assertEqual(sorted(targets), ["targets"] + (["targets_spoken"] if spoken else []))
+            for ranges in targets.values():
+                for lo, hi in ranges.values():
+                    self.assertLessEqual(lo, hi)
+            phrases = re.findall(r'(?m)^  - (written|spoken): "(.+)"$', text)
+            for register in ("written", "spoken") if spoken else ("written",):
+                mine = [p for r, p in phrases if r == register]
+                self.assertTrue(1 <= len(mine) <= 5, name + " " + register)
+                self.assertTrue(all(len(p.split()) < 12 for p in mine), name)
+
+    def test_saving_never_writes_into_the_built_in_folder(self):
+        sys.path.insert(0, os.path.join(SKILL, "scripts"))
+        was, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+        try:
+            import voice_check
+        finally:
+            sys.path.pop(0)
+            sys.dont_write_bytecode = was
+        self.assertNotIn(voice_check.BUILT_IN_VOICES, voice_check.voice_dirs())
+        self.assertEqual(os.path.dirname(voice_check.BUILT_IN_VOICES), os.path.abspath(SKILL))
 
 
 class Tones(unittest.TestCase):
@@ -308,6 +664,19 @@ class Packaging(unittest.TestCase):
         self.assertEqual(portable["version"], claude["version"])
         self.assertEqual(portable["version"], skill_version)
         self.assertTrue(claude["description"].strip())
+
+    def test_skill_frontmatter_fits_the_agent_skills_limits(self):
+        # agentskills.io/specification: name up to 64 characters, lowercase letters, digits and hyphens,
+        # matching the folder; description 1 to 1,024 characters. An app may refuse an upload that breaks these.
+        with open(os.path.join(SKILL, "SKILL.md"), encoding="utf-8") as f:
+            front = f.read().split("---")[1]
+        name = re.search(r"^name: (.+)$", front, re.M).group(1).strip()
+        desc = re.search(r"^description: (.+)$", front, re.M).group(1).strip()
+        self.assertRegex(name, r"^[a-z0-9]+(-[a-z0-9]+)*$")
+        self.assertLessEqual(len(name), 64)
+        self.assertEqual(name, os.path.basename(os.path.normpath(SKILL)))
+        self.assertTrue(0 < len(desc) <= 1024, len(desc))
+        self.assertNotRegex(desc, r": |\s#|[<>]")
 
     def test_skills_only_layout(self):
         self.assertTrue(os.path.isfile(os.path.join(self.PLUGIN, "skills", "geodequill", "SKILL.md")))
@@ -406,6 +775,16 @@ class Repository(unittest.TestCase):
             self.assertIn(f"download/{name}", page)
         self.assertIn(self.version(), self.read("guide/index.html"))
 
+    def test_every_download_carries_the_licence_notices(self):
+        import zipfile
+        for name in ("geodequill.plugin", "geodequill-skill.zip", "geodequill-mcp.zip"):
+            with zipfile.ZipFile(os.path.join(REPO, "download", name)) as z:
+                notice = [n for n in z.namelist() if n.endswith("geodequill/LICENSE.txt")]
+                self.assertTrue(notice, name)
+                text = z.read(notice[0]).decode("utf-8")
+                for holder in ("GeodeForge", "歸藏", "PeopleWorks"):
+                    self.assertIn(holder, text, name)
+
     def test_downloads_match_the_sources(self):
         import zipfile
         with zipfile.ZipFile(os.path.join(REPO, "download", "geodequill-skill.zip")) as z:
@@ -493,10 +872,11 @@ class Connector(unittest.TestCase):
         self.assertIn("Saved", saved_tone)
         self.assertIn("not understood", bad_tone)
         self.assertIn("(tone: board-letter; loosened in its direction: contractions_per_100w, em_dashes_per_1000w)", toned)
-        self.assertEqual(empty, [])
+        self.assertEqual([v["name"] for v in empty], BUILT_IN)
         self.assertIn("Saved", saved)
         self.assertIn("already exists", again)
-        self.assertEqual([v["name"] for v in listed], ["twain-corpus"])
+        self.assertEqual([v["name"] for v in listed], ["twain-corpus"] + BUILT_IN)
+        self.assertEqual([v["built_in"] for v in listed][:2], [False, True])
         self.assertIn("## Targets", read)
         self.assertGreaterEqual(summary(checked)[0], 8)
         self.assertIn("== Versus the voice profile (written) ==", against)

@@ -30,15 +30,23 @@ Based on the public catalog "Signs of AI writing" kept by Wikipedia's WikiProjec
 - **Sycophantic opener:** praising the question or the idea before answering.
 - **Connector pile-up:** Moreover, Furthermore, Additionally at the start of consecutive sentences.
 
+## In Chinese and Spanish
+
+The habits above have counterparts in other languages. The checker's Chinese list takes its categories from Humanizer-zh, a Chinese edition of the same Wikipedia catalogue, and adds phrases Chinese readers named in 2026, checked against human Chinese writing; its Spanish list is adapted from the Spanish rules of Signs of AI Writing (PeopleWorks). Both are MIT-licensed; their notices are in `LICENSE.txt` in this skill. Both lists were trimmed on real human writing before they shipped.
+
+- **Chinese.** Chat leftovers (希望这对你有帮助, 如果您还有其他问题); grand openers (在当今社会, 随着…的不断发展, 在…的时代背景下); inflated significance (彰显了, 标志着…新时代, 发挥着至关重要的作用); 不仅仅是…更是…; vague experts (一些专家认为); stacked hedges (也许可能); chat-style comfort and offers (稳稳地接住, 一句话总结, 如果你愿意，我可以); 不是…而是… repeated through a piece; and stock words such as 赋能, 至关重要, 深入探讨, 助力, 无缝. The checker also counts the —— dash: more than an occasional one is a habit worth breaking. 总而言之 and 综上所述 count only when they pile up with 此外 and 值得注意的是, because human writers use them too.
+- **Spanish.** Chat leftovers (espero que esto te ayude, no dudes en); grand openers (en la era digital); filler (cabe destacar que, es importante señalar, vale la pena mencionar); inflated phrases (juega un papel crucial, se erige como); "no se trata solo de"; tacked-on gerunds (", destacando", ", subrayando"); vague experts (los expertos afirman); stacked hedges (podría potencialmente).
+- **Every language:** even rhythm, formatting for show, emoji and bold-lead bullets read the same way in any script. (Thai, Lao and Tibetan do not mark where sentences end, so there only paragraph rhythm is measured.)
+
 ## How strong each signal is
 
-Measured on three collections of human writing: 23 books by Mark Twain (1.74 million words), 85,000 words of his speeches, and 141 documents that ship with ordinary software packages (192,000 words). No collection of machine-written text has been measured yet.
+Measured on three collections of human writing: 23 books by Mark Twain (1.74 million words), 85,000 words of his speeches, and 141 documents that ship with ordinary software packages (192,000 words). No collection of machine-written text has been measured yet. Measured later on modern English, the same phrases fired more often: about 1.6 per 10,000 words in mixed web and news text, and far more in office email: 16 of 38 files of human office email had at least one, almost all "let me know if". The Chinese and Spanish lists were measured on books (Chinese 1898 to 1971, Spanish novels 1880 to 1939), 1998 Chinese news, 2013 Chinese shopping reviews and the translated Python documentation: 0.2 strong tells per 10,000 words or fewer in each. Modern Spanish web text ran higher, about 0.6.
 
 - **Phrases and patterns are strong.** They fired 0.2 to 0.3 times per 10,000 words in all three collections. Fix every one.
 - **A single stock word is weak.** 0.6 and 1.4 per 10,000 words in the books and the software documents (intricate, testament, robust, foster, seamlessly turned up). Swap it for a plainer word if one fits. Do not hunt for it.
 - **Formatting marks are weak.** Title Case headings, bold labels on bullets, and emoji fired 17 times per 10,000 words in the software documents, all written by people. Remove them from personal prose; in a README they may be the writer's habit.
 - **Punctuation and contractions are the writer's habit, not machine marks.** Twain averaged about 9 em dashes and 11 semicolons per 1,000 words. Almost half the software documents used no contractions at all. Match the writer, not a rule.
-- **Even rhythm is the better signal.** In every one of the 23 books, sentence-length variation stayed between 0.69 and 1.15 and paragraph-size variation between 0.68 and 1.55. One software document in 141 fell below 0.5. Only human text was measured, so low variation is a hint, not proof. These are whole-book figures; in 500-word windows the sentence floor was about 0.5.
+- **Even rhythm is a hint.** In every one of the 23 books, sentence-length variation stayed between 0.69 and 1.15 and paragraph-size variation between 0.68 and 1.55. One software document in 141 fell below 0.5. Technical writing trips it more often in every language: in the Python documentation, 6% of documents fell below 0.5 in English, 7% in Chinese and 8% in Spanish, and 18% of Chinese technical books and newsletters did. Novels and essays almost never did. Only human text was measured, so low variation is a hint, not proof. These are whole-document figures. Draft-sized stretches of human writing (500 words, or 750 Chinese characters) fall below 0.5 far more often: about 6% of stretches of Spanish novels, 15% to 25% of documentation, news and Chinese books, and 28% to 40% of short shopping reviews. On a short draft, treat it as a reason to look, never as a verdict.
 
 ## Check yourself
 

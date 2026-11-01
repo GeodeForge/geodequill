@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="GeodeQuill — write in your own voice"/>
 <meta name="twitter:description" content="Teach your AI app how you write. Your voice, the tone you pick, and no invented details. Free and open source."/>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"GeodeQuill","url":"https://geodeforge.com/geodequill/","applicationCategory":"Plugin","operatingSystem":"Any","softwareVersion":"0.3.2","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GeodeForge","url":"https://geodeforge.com/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"GeodeQuill","url":"https://geodeforge.com/geodequill/","applicationCategory":"Plugin","operatingSystem":"Any","softwareVersion":"0.5.1","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GeodeForge","url":"https://geodeforge.com/"}}</script>
 <link rel="stylesheet" href="style.css?v=1"/>
 </head>
 <body>
@@ -52,7 +52,7 @@
       <div class="card"><h3>Learns your voice</h3>
         <p>From emails, posts or letters you wrote. Add transcripts of you talking, and it learns how you sound out loud too.</p></div>
       <div class="card"><h3>Keeps voices and tones</h3>
-        <p>A work voice, a casual voice, a character. Pick a tone each time: formal, casual, friendly, intimate and eight more.</p></div>
+        <p>A work voice, a casual voice, a character, or one of five built-in authors: Twain, Austen, Dickens, Lincoln and Wilde. Pick a tone each time: formal, casual, friendly, intimate and eight more.</p></div>
       <div class="card"><h3>Checks every draft</h3>
         <p>Against your own habits, and against the patterns that make text read as machine-written. Then it fixes what's off.</p></div>
     </div>
@@ -82,8 +82,8 @@
         <p>Every Claude plan, including Free. Skills in the Claude phone app aren't confirmed yet.</p></div>
       <div><h3>Other apps that read skills</h3>
         <p>Codex, GitHub Copilot, Gemini CLI, Cursor, VS Code and more. Apps that take MCP connectors work too.</p></div>
-      <div><h3>English, for now</h3>
-        <p>It can write in other languages, but its checks are built for English, so those drafts go unchecked.</p></div>
+      <div><h3>Any language</h3>
+        <p>It writes in any language. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run.</p></div>
     </div>
     <p class="note">GeodeQuill runs inside your AI app. This page can't do the writing itself, because that would need a paid AI server, and we don't run one.</p>
   </section>
@@ -140,6 +140,8 @@
         <p>ChatGPT doesn't take this kind of connector. Use the skill file there.</p>
       </div>
     </details>
+    <p class="note">AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly. To make sure it's used, start with <strong>"Use GeodeQuill to…"</strong>, for example <strong>"Use GeodeQuill to write a thank-you note like Jane Austen."</strong></p>
+    <p class="note">Already using GeodeQuill? Your saved voices are kept. Add the new file the same way you added the first one; if your app says the skill already exists, delete the old one first. In Claude Code, run <code>claude plugin marketplace update geodeforge</code> and then <code>claude plugin update geodequill@geodeforge</code> in a terminal, then restart Claude Code.</p>
   </section>
 
   <section id="download">
@@ -150,7 +152,7 @@
       <a href="download/geodequill-mcp.zip" download><strong>Connector file</strong><span>For apps that take MCP connectors · .zip</span></a>
       <a href="guide/"><strong>User guide</strong><span>Install, set up your voice, pick a tone · web page</span></a>
     </div>
-    <p class="meta">Version <span id="version">0.3.2</span> · <span id="released">1 November 2026</span> · Free · MIT licence · <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source on GitHub</a></p>
+    <p class="meta">Version <span id="version">0.5.1</span> · <span id="released">1 November 2026</span> · Free · MIT licence · <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source on GitHub</a></p>
   </section>
 
   <section class="verify" id="verify">

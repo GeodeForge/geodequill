@@ -29,6 +29,7 @@
 <li><strong>Codex, GitHub Copilot, Gemini CLI, Cursor and other tools that use skills:</strong> unzip the file that starts with <code>geodequill-skill</code> into the tool's skills folder. Your tool's help pages say where that folder is.</li>
 <li><strong>Tools that use MCP connectors</strong> (such as Claude Desktop, Cursor, VS Code): see the README that comes with the file that starts with <code>geodequill-mcp</code>.</li>
 </ul>
+<p><strong>Updating from an earlier version.</strong> Your saved voices and tones stay where they are; updating never touches them. Add the new file the same way you added the first one. If your app says a skill with that name already exists, delete the old one, then add the new one. In Claude Code, run <code>claude plugin marketplace update geodeforge</code> and then <code>claude plugin update geodequill@geodeforge</code> in a terminal, then restart Claude Code. In other tools, replace the old skill folder with the new one.</p>
 <h2>2. On a phone or tablet</h2>
 <ul>
 <li><strong>ChatGPT:</strong> add GeodeQuill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. The ChatGPT desktop app needs it added separately.</li>
@@ -47,14 +48,15 @@
 <li><strong>"Stay in my voice."</strong> Everything it writes for the rest of the chat uses your voice.</li>
 </ul>
 <p>If a real example or number would make the piece better, it asks you for one instead of making it up.</p>
+<p>AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at <a href="https://github.com/anthropics/skills" rel="noopener">github.com/anthropics/skills</a>). To make sure it's used, start with <strong>"Use GeodeQuill to…"</strong>, for example <strong>"Use GeodeQuill to write a thank-you note like Jane Austen."</strong></p>
 <h2>5. Pick a voice or a tone</h2>
 <ul>
-<li><strong>"List my voices"</strong> shows your saved voices as a numbered list. Answer with a number or a name.</li>
+<li><strong>"List my voices"</strong> shows your saved voices, then the built-in ones, as a numbered list. Answer with a number or a name.</li>
 <li><strong>"List tones"</strong> shows the tones: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic and persuasive.</li>
 <li>Or just name one: <strong>"in a formal tone"</strong>, <strong>"make it slightly warmer"</strong>, <strong>"very casual"</strong>.</li>
 </ul>
 <p>A tone changes how your voice speaks, not who is speaking. You can describe a tone of your own and ask GeodeQuill to save it.</p>
-<p>You can keep several voices: a work voice, a casual voice, a character. You can also build a voice from a famous author whose books are free of copyright, such as Mark Twain. Writing in a real person's voice is always labelled "in the style of" them.</p>
+<p>You can keep several voices: a work voice, a casual voice, a character. GeodeQuill also comes with five built-in voices of famous authors whose books are free of copyright: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Say <strong>"write this like Jane Austen"</strong>, or pick one from the list. You can build others the same way. Writing in a real person's voice is always labelled "in the style of" them.</p>
 <h2>6. Where your voices are kept</h2>
 <p>On your computer, in a folder named <code>.geodequill</code> inside your home folder. Every AI tool on that computer can use the same voices.</p>
 <p><strong>In ChatGPT, in Claude on the web, and in phone apps,</strong> each chat starts fresh and can't keep files. At the end of setup, GeodeQuill gives you your voice as a file or as text. Save it, and attach or paste it at the start of any chat where you want your voice.</p>
@@ -63,18 +65,19 @@
 <li>It won't promise to get past AI detectors. They guess, and they're often wrong.</li>
 <li>It won't invent memories, quotes, numbers or opinions and put them in your mouth.</li>
 <li>It won't use tricks like invisible characters or deliberate typos.</li>
-<li>It checks English only, for now. It can write in other languages, but it can't check those drafts.</li>
+<li>It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run.</li>
 </ul>
 <h2>8. If something seems off</h2>
 <ul>
 <li><strong>It doesn't sound like you:</strong> give it more samples, especially casual ones, and say "update my voice".</li>
 <li><strong>It asks to set up a voice when you already have one:</strong> in ChatGPT, attach your saved voice file first. Elsewhere, say "list my voices" to check it's there.</li>
+<li><strong>It doesn't seem to be using GeodeQuill</strong> (no voice, no "in the style of" label, no note at the end): start the request with "Use GeodeQuill to…".</li>
 <li><strong>It says it can't run its checker:</strong> the tool has no Python. GeodeQuill still works and checks the draft by reading it instead.</li>
 </ul>
 <h2>9. Tell us what's wrong</h2>
 <p>Found a fault, or a claim that doesn't hold up? Email <strong><a href="mailto:quill@geodeforge.com">quill@geodeforge.com</a></strong>. An example helps a lot, but leave it out if it's private. A person reads every message.</p>
 <p>GeodeQuill is free and open source under the MIT licence. The code is at <a href="https://github.com/GeodeForge/geodequill" rel="noopener">github.com/GeodeForge/geodequill</a>.</p>
-    <p class="meta">Version 0.3.2 · 1 November 2026</p>
+    <p class="meta">Version 0.5.1 · 1 November 2026</p>
   </section>
 </main>
 

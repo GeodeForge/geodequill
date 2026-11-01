@@ -1,0 +1,19 @@
+{
+  "name": "geodeforge",
+  "description": "Plugins from GeodeForge.",
+  "owner": {
+    "name": "GeodeForge",
+    "email": "quill@geodeforge.com"
+  },
+  "plugins": [
+    {
+      "name": "geodequill",
+      "source": "./plugin",
+      "description": "Writes in a saved voice and personality, lets you pick from your saved voices and from tones, and checks each draft for the habits that make text read as machine-written.",
+      "version": "0.3.2",
+      "homepage": "https://geodeforge.com/geodequill/",
+      "repository": "https://github.com/GeodeForge/geodequill",
+      "license": "MIT"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-label="Geodeforge">
+  <title>Geode mark</title>
+  <defs>
+    <clipPath id="g"><rect x="200" y="200" width="300" height="300" rx="14"/></clipPath>
+    <radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="340" cy="335" r="200">
+      <stop offset="0" stop-color="#BE82E6" stop-opacity="0.17"/>
+      <stop offset="0.55" stop-color="#BE82E6" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#BE82E6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="101" y="101" width="498" height="498" rx="79" fill="#FFFFFF"/>
+  <path fill-rule="evenodd" fill="#340A49" d="M137 0 H563 A137 137 0 0 1 700 137 V563 A137 137 0 0 1 563 700 H137 A137 137 0 0 1 0 563 V137 A137 137 0 0 1 137 0 Z M180 101 H520 A79 79 0 0 1 599 180 V520 A79 79 0 0 1 520 599 H180 A79 79 0 0 1 101 520 V180 A79 79 0 0 1 180 101 Z"/>
+  <g clip-path="url(#g)">
+    <polygon points="200,200 350,200 275,275" fill="#844A98"/>
+    <polygon points="350,200 425,275 275,275" fill="#4B1F5A"/>
+    <polygon points="350,200 500,200 425,275" fill="#471B55"/>
+    <polygon points="200,200 275,275 200,350" fill="#69377A"/>
+    <polygon points="200,350 275,275 275,425" fill="#431C52"/>
+    <polygon points="200,350 275,425 200,500" fill="#3F144D"/>
+    <polygon points="500,200 500,350 425,275" fill="#2E083C"/>
+    <polygon points="500,350 425,275 425,425" fill="#23082F"/>
+    <polygon points="500,350 500,500 425,425" fill="#350E46"/>
+    <polygon points="200,500 275,425 350,500" fill="#250A32"/>
+    <polygon points="350,500 275,425 425,425" fill="#22092D"/>
+    <polygon points="350,500 425,425 500,500" fill="#2A0B37"/>
+    <rect x="200" y="200" width="300" height="300" fill="url(#glow)"/>
+    <rect x="275" y="275" width="150" height="150" fill="#160B1B"/>
+    <polygon points="298.5,251 285.8,279.3 256,294 265.8,273.3" fill="#FFFFFF"/>
+  </g>
+</svg>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GeodeQuill — write in your own voice, with the AI app you already use</title>
+<meta name="description" content="Teach ChatGPT, Claude and other AI apps to write like you. Give GeodeQuill a few things you wrote, and it writes or rewrites anything in your voice, in the tone you pick. Free and open source."/>
+<link rel="icon" href="assets/logo-favicon-64.png" type="image/png"/>
+<link rel="canonical" href="https://geodeforge.com/geodequill/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="GeodeForge"/>
+<meta property="og:title" content="GeodeQuill — write in your own voice"/>
+<meta property="og:description" content="Teach your AI app how you write. Your voice, the tone you pick, and no invented details. Free and open source."/>
+<meta property="og:url" content="https://geodeforge.com/geodequill/"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="GeodeQuill — write in your own voice"/>
+<meta name="twitter:description" content="Teach your AI app how you write. Your voice, the tone you pick, and no invented details. Free and open source."/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"GeodeQuill","url":"https://geodeforge.com/geodequill/","applicationCategory":"Plugin","operatingSystem":"Any","softwareVersion":"0.3.2","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GeodeForge","url":"https://geodeforge.com/"}}</script>
+<link rel="stylesheet" href="style.css?v=1"/>
+</head>
+<body>
+
+<div class="gfband" role="img" aria-label="GeodeForge — artisan webtool design">
+  <img class="b-wm" src="assets/band-wordmark.webp" alt="" width="588" height="96"/>
+  <img class="b-cl" src="assets/band-cluster.webp" alt="" width="320" height="320"/>
+  <img class="b-st" src="assets/band-strap.webp" alt="" width="649" height="56"/>
+</div>
+
+<header class="bar">
+  <a class="brand" href="./"><img src="assets/geodequill-nib.svg" alt="" width="32" height="32"/><span>GeodeQuill</span></a>
+  <nav>
+    <a href="#install">Install</a>
+    <a href="#download">Download</a>
+    <a href="guide/">Guide</a>
+    <a href="#verify">Verify</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Write in your own voice.</h1>
+    <p class="sub">GeodeQuill teaches your AI app how you write. Give it a few things you wrote, and it writes or rewrites anything in your voice, in the tone you pick.</p>
+    <div class="lead-actions">
+      <a class="btn" href="#install">Install it</a>
+      <a class="btn ghost" href="guide/">Read the guide</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it does</h2>
+    <div class="grid">
+      <div class="card"><h3>Learns your voice</h3>
+        <p>From emails, posts or letters you wrote. Add transcripts of you talking, and it learns how you sound out loud too.</p></div>
+      <div class="card"><h3>Keeps voices and tones</h3>
+        <p>A work voice, a casual voice, a character. Pick a tone each time: formal, casual, friendly, intimate and eight more.</p></div>
+      <div class="card"><h3>Checks every draft</h3>
+        <p>Against your own habits, and against the patterns that make text read as machine-written. Then it fixes what's off.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it won't do</h2>
+    <ul class="plain">
+      <li><strong>Promise to get past AI detectors.</strong> They guess, and they're often wrong. It never gives a score.</li>
+      <li><strong>Make things up about you.</strong> No invented memories, quotes, numbers or opinions. If a real detail would help, it asks.</li>
+      <li><strong>Put words in a real person's mouth.</strong> A famous person's voice is always labelled "in the style of". It only goes looking for someone's writing when that writing is free of copyright.</li>
+      <li><strong>Use tricks.</strong> No invisible characters, no planted typos.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Looking for an AI humanizer?</h2>
+    <p class="note">Plenty of tools promise to "humanize" AI text so detectors miss it. GeodeQuill doesn't make that promise, because detectors guess and nobody can guarantee their verdict. What it does is make the writing sound like you: your rhythm, your words, your habits. It also takes out the patterns that make text read as machine-written.</p>
+  </section>
+
+  <section>
+    <h2>Where it works</h2>
+    <div class="where">
+      <div><h3>ChatGPT, on the web and your phone</h3>
+        <p>Add it on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. Skills aren't on every ChatGPT plan yet.</p></div>
+      <div><h3>Claude, on the web and the desktop app</h3>
+        <p>Every Claude plan, including Free. Skills in the Claude phone app aren't confirmed yet.</p></div>
+      <div><h3>Other apps that read skills</h3>
+        <p>Codex, GitHub Copilot, Gemini CLI, Cursor, VS Code and more. Apps that take MCP connectors work too.</p></div>
+      <div><h3>English, for now</h3>
+        <p>It can write in other languages, but its checks are built for English, so those drafts go unchecked.</p></div>
+    </div>
+    <p class="note">GeodeQuill runs inside your AI app. This page can't do the writing itself, because that would need a paid AI server, and we don't run one.</p>
+  </section>
+
+  <section id="install">
+    <h2>Install it</h2>
+    <p class="note">Pick the app you use. Each one takes a couple of minutes.</p>
+
+    <details>
+      <summary>ChatGPT</summary>
+      <div class="body">
+        <ol>
+          <li>Download the <a href="download/geodequill-skill.zip">skill file</a>.</li>
+          <li>On chatgpt.com, in the sidebar, select <strong>Plugins</strong>, then the <strong>Skills</strong> tab.</li>
+          <li>Select <strong>Create</strong>, then <strong>Upload from your computer</strong>, and choose the file.</li>
+          <li>Wait for ChatGPT to check it. Then start a chat and say <strong>"Set up my voice."</strong></li>
+        </ol>
+        <p>No Skills tab? Your plan doesn't have skills yet. OpenAI's help pages disagree on which plans do: one names the business plans, another says every paid plan except Free and Go.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Claude</summary>
+      <div class="body">
+        <ol>
+          <li>Download the <a href="download/geodequill-skill.zip">skill file</a>.</li>
+          <li>In Claude, go to <strong>Customize</strong>, then <strong>Skills</strong>.</li>
+          <li>Select <strong>+</strong>, then <strong>Create skill</strong>, then <strong>Upload a skill</strong>, and choose the file.</li>
+          <li>Start a chat and say <strong>"Set up my voice."</strong></li>
+        </ol>
+        <p>Skills need code execution turned on in Claude's settings.</p>
+        <p>In the Claude desktop app you can install the <a href="download/geodequill.plugin">plugin file</a> instead. In Claude Code, type <code>/plugin marketplace add GeodeForge/geodequill</code>, then <code>/plugin install geodequill@geodeforge</code>.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Codex, Copilot, Gemini CLI, Cursor and others</summary>
+      <div class="body">
+        <ol>
+          <li>Download the <a href="download/geodequill-skill.zip">skill file</a>.</li>
+          <li>Unzip it into your app's skills folder. Your app's help pages say where that folder is.</li>
+          <li>Say <strong>"Set up my voice."</strong></li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Apps that take MCP connectors</summary>
+      <div class="body">
+        <ol>
+          <li>Download the <a href="download/geodequill-mcp.zip">connector file</a> and unzip it.</li>
+          <li>Follow the README inside. You need Python 3.10 or later.</li>
+        </ol>
+        <p>ChatGPT doesn't take this kind of connector. Use the skill file there.</p>
+      </div>
+    </details>
+  </section>
+
+  <section id="download">
+    <h2>Download</h2>
+    <div class="dl">
+      <a href="download/geodequill-skill.zip" download><strong>Skill file</strong><span>For ChatGPT, Claude on the web, and other apps that read skills · .zip</span></a>
+      <a href="download/geodequill.plugin" download><strong>Plugin file</strong><span>For the Claude desktop app · .plugin</span></a>
+      <a href="download/geodequill-mcp.zip" download><strong>Connector file</strong><span>For apps that take MCP connectors · .zip</span></a>
+      <a href="guide/"><strong>User guide</strong><span>Install, set up your voice, pick a tone · web page</span></a>
+    </div>
+    <p class="meta">Version <span id="version">0.3.2</span> · <span id="released">1 November 2026</span> · Free · MIT licence · <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source on GitHub</a></p>
+  </section>
+
+  <section class="verify" id="verify">
+    <p class="whyfree">Free, open source, and nothing to sign up for.</p>
+    <h2>We invite you to double-check our work</h2>
+    <p>This page carries no analytics, no cookies and no third-party requests. Open your browser's developer tools, switch to the Network tab and reload. You'll see only this site's own files.</p>
+    <p>GeodeQuill adds no connection of its own. Its checker is one Python file that reads text and prints numbers. What you write still goes to the company whose AI app you use, under that company's terms.</p>
+    <p><a href="https://github.com/GeodeForge/geodequill" rel="noopener">The whole source is on GitHub. Read it, run the tests, fork it.</a></p>
+    <p>Found a bug, or a claim that doesn't hold up? Tell us. An example helps enormously, though we understand if yours is too private to share:
+    <a href="mailto:quill@geodeforge.com?subject=GeodeQuill%20%E2%80%94%20double-check">quill@geodeforge.com</a></p>
+    <p class="kicker">That's the difference between a privacy policy and a fact.</p>
+  </section>
+
+  <section class="morefrom">
+    <h2>More from GeodeForge</h2>
+    <div class="sibs">
+      <a href="https://geodeforge.com/geodeqr/">GeodeQR — free QR codes that never expire</a>
+      <a href="https://geodeforge.com/geodepdf/">GeodePDF — PDF tools that never upload your file</a>
+      <a href="https://geodeforge.com/geodecode/">GeodeCode — clean code and text before you paste it</a>
+    </div>
+    <a href="https://geodeforge.com/">See them all at geodeforge.com →</a>
+  </section>
+</main>
+
+<footer>
+  <span>
+    <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source</a> ·
+    <a href="guide/">Guide</a> ·
+    <a href="privacy/">Privacy</a> ·
+    <a href="mailto:quill@geodeforge.com">quill@geodeforge.com</a>
+  </span>
+  <span>&copy; 2026 &middot; A <a href="https://geodeforge.com/">GeodeForge</a> tool</span>
+</footer>
+
+<div class="gfband" role="img" aria-label="GeodeForge — artisan webtool design">
+  <img class="b-wm" src="assets/band-wordmark.webp" alt="" width="588" height="96"/>
+  <img class="b-cl" src="assets/band-cluster.webp" alt="" width="320" height="320"/>
+  <img class="b-st" src="assets/band-strap.webp" alt="" width="649" height="56"/>
+</div>
+</body>
+</html>

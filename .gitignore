@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+.publish-manifest
+.publishguard-allow
+desktop.ini
+Thumbs.db

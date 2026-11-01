@@ -1,0 +1,36 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "geodequill",
+  "version": "0.3.2",
+  "description": "Writes in a saved voice and personality, lets you pick from your saved voices and from tones, and checks each draft for the habits that make text read as machine-written.",
+  "author": {
+    "name": "GeodeForge",
+    "email": "quill@geodeforge.com",
+    "url": "https://geodeforge.com/"
+  },
+  "homepage": "https://geodeforge.com/geodequill/",
+  "repository": "https://github.com/GeodeForge/geodequill",
+  "license": "MIT",
+  "keywords": [
+    "writing",
+    "voice",
+    "style",
+    "tone",
+    "personality"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "GeodeQuill",
+        "shortDescription": "Write in your own voice and tone",
+        "longDescription": "GeodeQuill learns how you write from your own samples, keeps your voices and tones to pick from, and writes or rewrites text in them. It checks each draft for the habits that make text read as machine-written. It never invents memories, quotes or numbers, and never promises to beat an AI detector.",
+        "developerName": "GeodeForge",
+        "defaultPrompt": [
+          "Set up my voice from these samples.",
+          "List my voices.",
+          "Rewrite this in my voice, in a formal tone."
+        ]
+      }
+    }
+  }
+}

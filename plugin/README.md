@@ -23,7 +23,7 @@ A simple step-by-step guide for users is in `USER-GUIDE.md`.
 
 - **Claude on the web or in the desktop app (every plan, with code execution turned on):** in Claude, go to Customize, then Skills. Select +, then Create skill, then Upload a skill, and choose `geodequill-skill.zip`.
 - **Claude desktop app, the other way in:** install `geodequill.plugin`.
-- **Claude Code:** add the GitHub repository as a plugin marketplace with `/plugin marketplace add GeodeForge/geodequill`, then run `/plugin install geodequill@geodeforge`.
+- **Claude Code:** add the GitHub repository as a plugin marketplace with `/plugin marketplace add GeodeForge/geodequill`, then run `/plugin install geodequill@geodeforge`. To get new versions on their own, type `/plugin`, open Marketplaces, pick geodeforge, and choose Enable auto-update.
 - **ChatGPT:** in the sidebar, select Plugins, then the Skills tab. Select Create, then Upload from your computer, and choose `geodequill-skill.zip`. It runs inside ChatGPT; no server is needed. Skills are not on every ChatGPT plan yet: one OpenAI help page names the business plans, another says every paid plan except Free and Go.
 - **Any AI tool that reads Agent Skills** (the open SKILL.md format: Codex, GitHub Copilot, Gemini CLI, Cursor, VS Code, Windsurf, Goose and others): unzip `geodequill-skill.zip` into the tool's skills folder. Each tool documents where that folder is.
 - **Any AI tool that takes MCP connectors** (Claude Desktop, Cursor, VS Code, Windsurf, Zed, Cline and others): unzip `geodequill-mcp.zip`, install the MCP package with `pip install mcp`, and add the connector to the tool's MCP settings as a local command: `python3` (on Windows, `python`) followed by the full path to `geodequill_mcp.py` in the unzipped folder.
@@ -51,7 +51,7 @@ Use it on your own writing, and follow the rules of wherever you submit it.
 
 ## Phones and tablets
 
-Add the skill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so the phone app should have it too; not yet tested. The ChatGPT desktop app needs it added separately. The Claude phone app cannot add the skill; add it once from a computer (the Claude website or the desktop app). The phone app then uses it. Phone apps can't keep a voice file, so the voice is given as text at the end of setup, to paste in later.
+Add the skill on chatgpt.com, if the plan has skills. Whether the ChatGPT phone and desktop apps then use it is not confirmed. The Claude phone app cannot add the skill; add it once from a computer (the Claude website or the desktop app). The phone app then uses it. Phone apps can't keep a voice file, so the voice is given as text at the end of setup, to paste in later.
 
 ## Not covered
 

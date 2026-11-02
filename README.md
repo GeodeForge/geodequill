@@ -38,7 +38,9 @@ A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
 
 Claude Code can install straight from this repository:
 `/plugin marketplace add GeodeForge/geodequill`, then `/plugin install geodequill@geodeforge`.
-To update later, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. Saved voices and tones are never touched by an update.
+To update later, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. Saved voices and tones are never touched by an update. To get updates on their own, type `/plugin`, open
+Marketplaces, pick geodeforge, and choose Enable auto-update. To hear about every new version, watch this
+repository's releases (Watch, then Custom, then Releases).
 
 ## Check for yourself
 

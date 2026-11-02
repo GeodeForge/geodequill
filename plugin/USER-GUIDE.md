@@ -9,15 +9,17 @@ Get the files from geodeforge.com/geodequill/. Then pick the line for the AI you
 - **Claude on the web or in the desktop app** (every plan, including Free): go to **Customize**, then **Skills**. Select **+**, then **Create skill**, then **Upload a skill**, and choose the file that starts with `geodequill-skill`. Code execution has to be turned on in Claude's settings.
 - **Claude desktop app**, the other way in: install the file that ends in `.plugin`.
 - **Claude Code:** type `/plugin marketplace add GeodeForge/geodequill`, then `/plugin install geodequill@geodeforge`.
-- **ChatGPT:** in the sidebar, select **Plugins**, then the **Skills** tab. Select **Create**, then **Upload from your computer**, and choose the file that starts with `geodequill-skill`. ChatGPT checks the file before it turns on. Not every ChatGPT plan has skills yet. One OpenAI help page names the business plans; another says every paid plan except Free and Go. If you don't see the Skills tab, your plan doesn't have it.
+- **ChatGPT:** in the sidebar, select **Plugins**, then the **Skills** tab. Select **Create**, then **Upload from your computer**, and choose the file that starts with `geodequill-skill`. ChatGPT checks the file before it turns on. Not every ChatGPT plan has skills yet. One OpenAI help page names the business plans; another says every paid plan except Free and Go. If you don't see the Skills tab, or ChatGPT says skills aren't available for your account, your plan doesn't have them.
 - **Codex, GitHub Copilot, Gemini CLI, Cursor and other tools that use skills:** unzip the file that starts with `geodequill-skill` into the tool's skills folder. Your tool's help pages say where that folder is.
 - **Tools that use MCP connectors** (such as Claude Desktop, Cursor, VS Code): see the README that comes with the file that starts with `geodequill-mcp`.
 
 **Updating from an earlier version.** Your saved voices and tones stay where they are; updating never touches them. Afterwards, check that the new version is the one answering: ask **"Which version of GeodeQuill are you using?"** If your app lists two GeodeQuill entries, delete the older one. Add the new file the same way you added the first one. If your app says a skill with that name already exists, delete the old one, then add the new one. In Claude Code, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. In other tools, replace the old skill folder with the new one.
 
+**Hearing about new versions.** GeodeQuill can't check for updates itself, because it makes no connection of its own. To get an email when a new version comes out, sign in to GitHub, open github.com/GeodeForge/geodequill, select **Watch**, then **Custom**, tick **Releases**, and select **Apply**. In Claude Code, updates can arrive on their own: type `/plugin`, open **Marketplaces**, pick **geodeforge**, and choose **Enable auto-update**.
+
 ## 2. On a phone or tablet
 
-- **ChatGPT:** add GeodeQuill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. The ChatGPT desktop app needs it added separately.
+- **ChatGPT:** add GeodeQuill on chatgpt.com, if your plan has skills. Whether the ChatGPT phone and desktop apps then use it isn't confirmed yet.
 - **Claude:** the phone app can't add GeodeQuill. Add it once from a computer, on the Claude website or in the desktop app, and the phone app uses it from then on.
 - A phone app can't keep your voice as a file. Save the voice as text at the end of setup, and paste it in when you want it. Section 6 explains.
 

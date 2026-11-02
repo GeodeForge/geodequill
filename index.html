@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="GeodeQuill — write in your own voice"/>
 <meta name="twitter:description" content="Teach your AI app how you write. Your voice, the tone you pick, and it is built not to invent details about you. Free and open source."/>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"GeodeQuill","url":"https://geodeforge.com/geodequill/","applicationCategory":"Plugin","operatingSystem":"Any","softwareVersion":"0.6.0","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GeodeForge","url":"https://geodeforge.com/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"GeodeQuill","url":"https://geodeforge.com/geodequill/","applicationCategory":"Plugin","operatingSystem":"Any","softwareVersion":"0.6.1","license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"GeodeForge","url":"https://geodeforge.com/"}}</script>
 <link rel="stylesheet" href="style.css?v=1"/>
 </head>
 <body>
@@ -76,8 +76,8 @@
   <section>
     <h2>Where it works</h2>
     <div class="where">
-      <div><h3>ChatGPT, on the web and your phone</h3>
-        <p>Add it on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. Skills aren't on every ChatGPT plan yet.</p></div>
+      <div><h3>ChatGPT, on plans with skills</h3>
+        <p>Add it on chatgpt.com if your plan includes skills. The Free and Go plans don't, and OpenAI's help pages disagree about the rest. Whether the ChatGPT phone and desktop apps then use it isn't confirmed.</p></div>
       <div><h3>Claude, on the web and the desktop app</h3>
         <p>Every Claude plan, including Free. The phone app can't add skills: add it once from a computer, on the Claude website or in the desktop app, and the phone app uses it from then on.</p></div>
       <div><h3>Other apps that read skills</h3>
@@ -101,7 +101,7 @@
           <li>Select <strong>Create</strong>, then <strong>Upload from your computer</strong>, and choose the file.</li>
           <li>Wait for ChatGPT to check it. Then start a chat and say <strong>"Set up my voice."</strong></li>
         </ol>
-        <p>No Skills tab? Your plan doesn't have skills yet. OpenAI's help pages disagree on which plans do: one names the business plans, another says every paid plan except Free and Go.</p>
+        <p>No Skills tab, or a message that skills aren't available for this account? Your plan doesn't have skills yet. OpenAI's help pages disagree on which plans do: one names the business plans, another says every paid plan except Free and Go.</p>
       </div>
     </details>
 
@@ -141,7 +141,7 @@
       </div>
     </details>
     <p class="note">AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly. To make sure it's used, start with <strong>"Use GeodeQuill to…"</strong>, for example <strong>"Use GeodeQuill to write a thank-you note like Jane Austen."</strong></p>
-    <p class="note">Already using GeodeQuill? Your saved voices are kept. Add the new file the same way you added the first one; if your app says the skill already exists, delete the old one first. In Claude Code, run <code>claude plugin marketplace update geodeforge</code> and then <code>claude plugin update geodequill@geodeforge</code> in a terminal, then restart Claude Code.</p>
+    <p class="note">Already using GeodeQuill? Your saved voices are kept. Add the new file the same way you added the first one; if your app says the skill already exists, delete the old one first. In Claude Code, run <code>claude plugin marketplace update geodeforge</code> and then <code>claude plugin update geodequill@geodeforge</code> in a terminal, then restart Claude Code. To hear about new versions, watch GeodeQuill's releases on <a href="https://github.com/GeodeForge/geodequill" rel="noopener">GitHub</a> (select <strong>Watch</strong>, then <strong>Custom</strong>, then <strong>Releases</strong>). In Claude Code, updates can arrive on their own: type <code>/plugin</code>, open <strong>Marketplaces</strong>, pick <strong>geodeforge</strong>, and choose <strong>Enable auto-update</strong>.</p>
   </section>
 
   <section id="download">
@@ -152,7 +152,7 @@
       <a href="download/geodequill-mcp.zip" download><strong>Connector file</strong><span>For apps that take MCP connectors · .zip</span></a>
       <a href="guide/"><strong>User guide</strong><span>Install, set up your voice, pick a tone · web page</span></a>
     </div>
-    <p class="meta">Version <span id="version">0.6.0</span> · <span id="released">2 November 2026</span> · Free · MIT licence · <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source on GitHub</a></p>
+    <p class="meta">Version <span id="version">0.6.1</span> · <span id="released">2 November 2026</span> · Free · MIT licence · <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source on GitHub</a></p>
   </section>
 
   <section class="verify" id="verify">

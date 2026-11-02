@@ -25,14 +25,15 @@
 <li><strong>Claude on the web or in the desktop app</strong> (every plan, including Free): go to <strong>Customize</strong>, then <strong>Skills</strong>. Select <strong>+</strong>, then <strong>Create skill</strong>, then <strong>Upload a skill</strong>, and choose the file that starts with <code>geodequill-skill</code>. Code execution has to be turned on in Claude's settings.</li>
 <li><strong>Claude desktop app</strong>, the other way in: install the file that ends in <code>.plugin</code>.</li>
 <li><strong>Claude Code:</strong> type <code>/plugin marketplace add GeodeForge/geodequill</code>, then <code>/plugin install geodequill@geodeforge</code>.</li>
-<li><strong>ChatGPT:</strong> in the sidebar, select <strong>Plugins</strong>, then the <strong>Skills</strong> tab. Select <strong>Create</strong>, then <strong>Upload from your computer</strong>, and choose the file that starts with <code>geodequill-skill</code>. ChatGPT checks the file before it turns on. Not every ChatGPT plan has skills yet. One OpenAI help page names the business plans; another says every paid plan except Free and Go. If you don't see the Skills tab, your plan doesn't have it.</li>
+<li><strong>ChatGPT:</strong> in the sidebar, select <strong>Plugins</strong>, then the <strong>Skills</strong> tab. Select <strong>Create</strong>, then <strong>Upload from your computer</strong>, and choose the file that starts with <code>geodequill-skill</code>. ChatGPT checks the file before it turns on. Not every ChatGPT plan has skills yet. One OpenAI help page names the business plans; another says every paid plan except Free and Go. If you don't see the Skills tab, or ChatGPT says skills aren't available for your account, your plan doesn't have them.</li>
 <li><strong>Codex, GitHub Copilot, Gemini CLI, Cursor and other tools that use skills:</strong> unzip the file that starts with <code>geodequill-skill</code> into the tool's skills folder. Your tool's help pages say where that folder is.</li>
 <li><strong>Tools that use MCP connectors</strong> (such as Claude Desktop, Cursor, VS Code): see the README that comes with the file that starts with <code>geodequill-mcp</code>.</li>
 </ul>
 <p><strong>Updating from an earlier version.</strong> Your saved voices and tones stay where they are; updating never touches them. Afterwards, check that the new version is the one answering: ask <strong>"Which version of GeodeQuill are you using?"</strong> If your app lists two GeodeQuill entries, delete the older one. Add the new file the same way you added the first one. If your app says a skill with that name already exists, delete the old one, then add the new one. In Claude Code, run <code>claude plugin marketplace update geodeforge</code> and then <code>claude plugin update geodequill@geodeforge</code> in a terminal, then restart Claude Code. In other tools, replace the old skill folder with the new one.</p>
+<p><strong>Hearing about new versions.</strong> GeodeQuill can't check for updates itself, because it makes no connection of its own. To get an email when a new version comes out, sign in to GitHub, open <a href="https://github.com/GeodeForge/geodequill" rel="noopener">github.com/GeodeForge/geodequill</a>, select <strong>Watch</strong>, then <strong>Custom</strong>, tick <strong>Releases</strong>, and select <strong>Apply</strong>. In Claude Code, updates can arrive on their own: type <code>/plugin</code>, open <strong>Marketplaces</strong>, pick <strong>geodeforge</strong>, and choose <strong>Enable auto-update</strong>.</p>
 <h2>2. On a phone or tablet</h2>
 <ul>
-<li><strong>ChatGPT:</strong> add GeodeQuill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. The ChatGPT desktop app needs it added separately.</li>
+<li><strong>ChatGPT:</strong> add GeodeQuill on chatgpt.com, if your plan has skills. Whether the ChatGPT phone and desktop apps then use it isn't confirmed yet.</li>
 <li><strong>Claude:</strong> the phone app can't add GeodeQuill. Add it once from a computer, on the Claude website or in the desktop app, and the phone app uses it from then on.</li>
 <li>A phone app can't keep your voice as a file. Save the voice as text at the end of setup, and paste it in when you want it. Section 6 explains.</li>
 </ul>
@@ -79,7 +80,7 @@
 <h2>9. Tell us what's wrong</h2>
 <p>Found a fault, or a claim that doesn't hold up? Email <strong><a href="mailto:quill@geodeforge.com">quill@geodeforge.com</a></strong>. An example helps a lot, but leave it out if it's private. A person reads every message.</p>
 <p>GeodeQuill is free and open source under the MIT licence. The code is at <a href="https://github.com/GeodeForge/geodequill" rel="noopener">github.com/GeodeForge/geodequill</a>.</p>
-    <p class="meta">Version 0.6.0 · 2 November 2026</p>
+    <p class="meta">Version 0.6.1 · 2 November 2026</p>
   </section>
 </main>
 

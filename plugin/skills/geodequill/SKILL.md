@@ -5,7 +5,7 @@ compatibility: Works in any agent that reads Agent Skills. The checker script ne
 license: MIT
 metadata:
   author: GeodeForge
-  version: "0.6.0"
+  version: "0.6.1"
 ---
 
 # GeodeQuill

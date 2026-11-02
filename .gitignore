@@ -5,3 +5,5 @@ __pycache__/
 .publishguard-allow
 desktop.ini
 Thumbs.db
+node_modules/
+.wrangler/

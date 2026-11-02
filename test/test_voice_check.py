@@ -129,7 +129,9 @@ class Robustness(unittest.TestCase):
                  scratch(b"line one.\r\n\r\nline two is here.\r\n", "wb")]
         for p in paths:
             code, out = run("scan", p)
-            self.assertEqual(code, 0, out)
+            # An empty file is refused on purpose since 0.6.0 (no words), not a crash.
+            self.assertEqual(code, 1 if p == paths[1] else 0, out)
+            self.assertNotIn("Traceback", out)
 
     def test_missing_input_and_bad_usage_exit_codes(self):
         self.assertEqual(run("scan", os.path.join(FIX, "nope.txt"))[0], 1)
@@ -709,6 +711,38 @@ class Packaging(unittest.TestCase):
         if os.path.isfile(licence):
             with open(licence, encoding="utf-8") as f:
                 self.assertTrue(f.read().startswith("MIT License"))
+
+
+class ScanLimits(unittest.TestCase):
+    """0.6.0: text with no words is refused, and a narrow wrong-language warning."""
+
+    EN_LETTER = ("Dear friend,\n\nI am very much obliged to you for your kindness last week. It was a great help "
+                 "to me, and I shall not soon forget it. Please accept my warmest thanks, and believe me to be "
+                 "your grateful friend always.\n\nYours,\n[name]\n")
+    VI_NO_MARKS = ("Kinh gui chi Lan,\n\nEm xin chan thanh cam on chi da giup em trong buoi hop tuan truoc. Nho co "
+                   "chi ma em da hoan thanh bao cao dung han va nhan duoc nhan xet tot tu sep. Em that su biet on "
+                   "chi rat nhieu va mong co dip duoc moi chi mot bua com de cam on.\n\nEm,\n[ten]\n")
+
+    def test_no_words_is_refused(self):
+        for text in ("", "   \n\n \t\n", "\n\n"):
+            code, out = run("scan", scratch(text))
+            self.assertEqual(code, 1, repr(text))
+            self.assertIn("Nothing to check", out)
+
+    def test_short_texts_in_other_scripts_are_scanned(self):
+        for text in ("你好朋友。", "ありがとう。", "ขอบคุณครับ", "شكرا لك"):
+            code, out = run("scan", scratch(text + "\n"))
+            self.assertEqual(code, 0, text)
+            self.assertIn("== Language ==", out)
+
+    def test_language_warning_is_narrow(self):
+        self.assertIn("reads as English", run("scan", scratch(self.EN_LETTER), "--lang", "vi")[1])
+        self.assertIn("written in Chinese characters",
+                      run("scan", scratch("亲爱的朋友，非常感谢你上周的帮助，我一直记在心里，希望我们很快能再见面。\n"), "--lang", "vi")[1])
+        for text in (self.VI_NO_MARKS, "Chuc mung sinh nhat anh! Chuc anh mot tuoi moi that nhieu niem vui.\n",
+                     "Happy birthday! Wishing you a year full of joy and good health.\n"):
+            self.assertNotIn("Warning: --lang", run("scan", scratch(text), "--lang", "vi")[1], text[:30])
+        self.assertNotIn("Warning: --lang", run("scan", scratch(self.EN_LETTER), "--lang", "en")[1])
 
 
 class Repository(unittest.TestCase):

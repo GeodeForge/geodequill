@@ -42,7 +42,8 @@ In ChatGPT and other web chats, each chat starts fresh. The voice is given to yo
 ## What it does not do
 
 - It does not promise to beat any AI detector. Detectors guess from patterns and are often wrong. It never gives a score.
-- It does not invent memories, quotes, numbers or opinions. Where a real detail would help, it asks you or leaves a bracketed note.
+- It is built not to invent memories, quotes, numbers or opinions. Where a real detail would help, it asks you or leaves a bracketed note. Read drafts before sending them: no check catches every invented detail.
+- Every draft is reviewed by reading, against the list of machine-writing habits and the voice's habits. Each piece ends with an offer to run the checker, which measures the draft exactly; say yes and the app visibly runs code. Apps that can't run code can't run the checker.
 - It does not use tricks such as invisible characters or planted typos.
 - For real people, it searches only for authors whose work is public domain. Writing in a real person's voice is always labelled "in the style of" that person, with no invented quotes.
 
@@ -50,7 +51,7 @@ Use it on your own writing, and follow the rules of wherever you submit it.
 
 ## Phones and tablets
 
-Add the skill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so the phone app should have it too; not yet tested. The ChatGPT desktop app needs it added separately. Skills in the Claude phone app are not confirmed. Phone apps can't keep a voice file, so the voice is given as text at the end of setup, to paste in later.
+Add the skill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so the phone app should have it too; not yet tested. The ChatGPT desktop app needs it added separately. The Claude phone app cannot add the skill; add it once from a computer (the Claude website or the desktop app). The phone app then uses it. Phone apps can't keep a voice file, so the voice is given as text at the end of setup, to paste in later.
 
 ## Not covered
 

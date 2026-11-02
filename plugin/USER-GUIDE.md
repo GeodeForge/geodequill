@@ -13,12 +13,12 @@ Get the files from geodeforge.com/geodequill/. Then pick the line for the AI you
 - **Codex, GitHub Copilot, Gemini CLI, Cursor and other tools that use skills:** unzip the file that starts with `geodequill-skill` into the tool's skills folder. Your tool's help pages say where that folder is.
 - **Tools that use MCP connectors** (such as Claude Desktop, Cursor, VS Code): see the README that comes with the file that starts with `geodequill-mcp`.
 
-**Updating from an earlier version.** Your saved voices and tones stay where they are; updating never touches them. Add the new file the same way you added the first one. If your app says a skill with that name already exists, delete the old one, then add the new one. In Claude Code, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. In other tools, replace the old skill folder with the new one.
+**Updating from an earlier version.** Your saved voices and tones stay where they are; updating never touches them. Afterwards, check that the new version is the one answering: ask **"Which version of GeodeQuill are you using?"** If your app lists two GeodeQuill entries, delete the older one. Add the new file the same way you added the first one. If your app says a skill with that name already exists, delete the old one, then add the new one. In Claude Code, run `claude plugin marketplace update geodeforge` and then `claude plugin update geodequill@geodeforge` in a terminal, then restart Claude Code. In other tools, replace the old skill folder with the new one.
 
 ## 2. On a phone or tablet
 
 - **ChatGPT:** add GeodeQuill on chatgpt.com. OpenAI's help page counts the website and the phone app as one place, so your phone should get it too; we haven't tested that yet. The ChatGPT desktop app needs it added separately.
-- **Claude:** we haven't confirmed that skills work in the Claude phone app. Use Claude on the web or in the desktop app.
+- **Claude:** the phone app can't add GeodeQuill. Add it once from a computer, on the Claude website or in the desktop app, and the phone app uses it from then on.
 - A phone app can't keep your voice as a file. Save the voice as text at the end of setup, and paste it in when you want it. Section 6 explains.
 
 ## 3. Teach it your voice
@@ -41,6 +41,12 @@ If a real example or number would make the piece better, it asks you for one ins
 
 AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at github.com/anthropics/skills). To make sure it's used, start with **"Use GeodeQuill to…"**, for example **"Use GeodeQuill to write a thank-you note like Jane Austen."**
 
+**The note at the end.** After each piece, GeodeQuill adds a short note: blanks you need to fill in, "in the style of" when the voice is a real person, and an offer to run its checker. The note is not part of your text: copy the text, not the note.
+
+**How drafts are checked.** GeodeQuill reviews every draft by reading it against its list of machine-writing habits and your voice's habits. Then its note offers to run the checker, which measures the draft exactly against your voice. Say yes and you will see your app run code (it may ask your permission first); if nothing runs, the check did not happen. Some apps can't run code; GeodeQuill then says it can't measure there, goes through the text again by hand against the checker's lists, and tells you what it changed, with no numbers. If you don't want the offer, tell it to stop asking.
+
+**"Allow code?"** Your app may ask permission to run code. That is GeodeQuill's checker. It only asks after you say yes to a check. Allowing it lets the checker run; saying no is fine, and the draft was still reviewed by reading.
+
 ## 5. Pick a voice or a tone
 
 - **"List my voices"** shows your saved voices, then the built-in ones, as a numbered list. Answer with a number or a name.
@@ -60,7 +66,7 @@ On your computer, in a folder named `.geodequill` inside your home folder. Every
 ## 7. What it won't do
 
 - It won't promise to get past AI detectors. They guess, and they're often wrong.
-- It won't invent memories, quotes, numbers or opinions and put them in your mouth.
+- It's built not to invent memories, quotes, numbers or opinions and put them in your mouth. Read the draft before you send it: no check catches every invented detail.
 - It won't use tricks like invisible characters or deliberate typos.
 - It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run.
 
@@ -69,7 +75,6 @@ On your computer, in a folder named `.geodequill` inside your home folder. Every
 - **It doesn't sound like you:** give it more samples, especially casual ones, and say "update my voice".
 - **It asks to set up a voice when you already have one:** in ChatGPT, attach your saved voice file first. Elsewhere, say "list my voices" to check it's there.
 - **It doesn't seem to be using GeodeQuill** (no voice, no "in the style of" label, no note at the end): start the request with "Use GeodeQuill to…".
-- **It says it can't run its checker:** the tool has no Python. GeodeQuill still works and checks the draft by reading it instead.
 
 ## 9. Tell us what's wrong
 

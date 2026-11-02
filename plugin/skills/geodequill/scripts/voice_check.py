@@ -29,7 +29,7 @@ have no spaces between words, so their lengths are counted in characters.
 
 Standard library only. It reports habits it can count. It does NOT predict
 what any AI detector will say and never prints an AI-probability score.
-Exit codes: 0 done, 1 a file could not be read, 2 wrong usage.
+Exit codes: 0 done, 1 a file could not be read or scan found no words, 2 wrong usage.
 """
 import json
 import os
@@ -717,7 +717,69 @@ def language_lines(info):
 MAX_LISTED = 200
 
 
+EMPTY_MESSAGE = "Nothing to check: the text has no words."
+
+
+def has_words(raw):
+    """True when the text holds at least one letter in any script."""
+    return any(ch.isalpha() for ch in prose_only(raw or ""))
+
+
+LANG_WARN_MIN_TOKENS = 20     # Latin texts shorter than this cannot be told apart reliably
+LANG_WARN_MIN_SHARE = 0.25    # share of the other language's common words before warning
+LANG_WARN_MIN_SCRIPT = 0.6    # share of letters in another script before warning
+
+
+def expected_script(code):
+    if code in ("zh",):
+        return {"HAN"}
+    if code == "ja":
+        return {"HAN", "HIRAGANA", "KATAKANA"}
+    if code == "ko":
+        return {"HANGUL"}
+    if code in ("th", "lo", "bo"):
+        return {{"th": "THAI", "lo": "LAO", "bo": "TIBETAN"}[code]}
+    if code in LANG_SCRIPT:
+        return {LANG_SCRIPT[code].upper()}
+    if code in STOPWORDS:
+        return {"LATIN"}
+    return None
+
+
+def language_mismatch(raw, requested):
+    """A warning when --lang names one language and the text plainly reads as another, or None.
+    Narrow on purpose: it fires only on a clear signal, so short notes and Vietnamese typed
+    without accent marks are not flagged (both are read too weakly to judge)."""
+    code = normalize_lang(requested) if requested else None
+    if not code:
+        return None
+    text = re.sub(r"https?://\S+|www\.\S+", " ", prose_only(raw))
+    shares = script_shares(text)
+    if not shares:
+        return None
+    main, part = shares[0]
+    want = expected_script(code)
+    letters = sum(1 for ch in text if ch.isalpha())
+    if want and main not in want and part >= LANG_WARN_MIN_SCRIPT and letters >= 20:
+        label = SCRIPT_LABELS.get(main, main.title())
+        label = label if "characters" in label else label + " script"
+        return (f"Warning: --lang {requested} was given, but most of the text is written in "
+                f"{label}. If the draft should be in "
+                f"{LANG_NAMES.get(code, code)}, it is not.")
+    if main == "LATIN" and (not want or "LATIN" in want):
+        guess, ls, ntok = latin_guess(text)
+        if (guess and guess not in ("en?", code) and ntok >= LANG_WARN_MIN_TOKENS
+                and ls.get(guess, 0) >= LANG_WARN_MIN_SHARE):
+            pct = round(100 * ls[guess])
+            return (f"Warning: --lang {requested} was given, but the text reads as {LANG_NAMES[guess]} "
+                    f"({pct}% of its words are common {LANG_NAMES[guess]} words). If the draft should "
+                    f"be in {LANG_NAMES.get(code, code)}, it is not.")
+    return None
+
+
 def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lang=None):
+    if not has_words(raw):
+        return EMPTY_MESSAGE
     info = resolve_language(raw, lang)
     hits, mild = find_tells(raw, info["code"])
     m = metrics(raw, info["code"], info["unit"])
@@ -746,7 +808,11 @@ def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lan
             tone_note = f"(tone: {t['name']}; loosened in its direction: {', '.join(loosened) or 'nothing in this profile'})"
         else:
             tone_note = f"(tone: {t['name']}; no profile ranges to adjust)"
-    out = language_lines(info) + ["", "== Machine-writing tells =="]
+    out = language_lines(info)
+    mismatch = language_mismatch(raw, lang)
+    if mismatch:
+        out.append(mismatch)
+    out += ["", "== Machine-writing tells =="]
     if hits:
         for no, kind, found, _line in hits[:MAX_LISTED]:
             out.append(f"line {no}: {kind}: \"{found}\"")
@@ -826,8 +892,9 @@ def cmd_scan(path, profile, register="written", tone=None, lang=None):
     ptxt = read_text(profile) if profile else None
     if path in DECODE_NOTES:
         print("WARNING: " + DECODE_NOTES[path] + "\n")
-    print(scan_report(raw, ptxt, profile, register, tone, lang))
-    return 0
+    report = scan_report(raw, ptxt, profile, register, tone, lang)
+    print(report)
+    return 1 if report == EMPTY_MESSAGE else 0
 
 
 TARGET_KEYS = ("avg_sentence_words", "sentence_cv", "paragraph_cv",

@@ -10,7 +10,7 @@
       "name": "geodequill",
       "source": "./plugin",
       "description": "Writes in a saved voice and personality, lets you pick from your saved voices, five built-in author voices and tones, and checks each draft for the habits that make text read as machine-written.",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "homepage": "https://geodeforge.com/geodequill/",
       "repository": "https://github.com/GeodeForge/geodequill",
       "license": "MIT"

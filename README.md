@@ -2,8 +2,8 @@
 
 **Write in your own voice, in the tone you pick.** GeodeQuill learns how you write from a few
 things you wrote yourself, keeps your voices and tones to pick from, and writes or rewrites
-text in them. It runs inside the AI app you already use: ChatGPT, Claude, Codex, Copilot,
-Gemini CLI, Cursor and others that read skills.
+text in them. It runs inside the AI app you already use: Claude, ChatGPT (on plans with skills), Codex,
+Copilot, Gemini CLI, Cursor and others that read skills.
 
 It also comes with five built-in voices measured from public-domain works: Mark Twain, Jane
 Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Each profile lists its sources, in
@@ -46,6 +46,10 @@ repository's releases (Watch, then Custom, then Releases).
 
 The checker is one Python file, `plugin/skills/geodequill/scripts/voice_check.py`. It reads
 text and prints numbers. It makes no network requests; search it for `import` and see.
+
+To check a draft without installing anything, paste it at
+[geodeforge.com/geodequill/check](https://geodeforge.com/geodequill/check/). The same file runs
+there, inside your browser, and what you paste stays on your device.
 
 Run the tests (Python 3.10 or later):
 

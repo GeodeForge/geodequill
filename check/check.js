@@ -49,6 +49,24 @@ function engine() {
 	return ready;
 }
 
+function takeVoice() {
+	if (location.hash !== "#own") return;
+	let text = null;
+	try {
+		text = sessionStorage.getItem("geodequill-voice");
+		sessionStorage.removeItem("geodequill-voice");
+	} catch (e) {
+		text = null;
+	}
+	if (!text) return;
+	$("voice").value = "own";
+	$("ownbox").hidden = false;
+	$("ownvoice").value = text;
+	say("Your new voice is filled in. Paste a draft above and press Check it.");
+}
+
+takeVoice();
+
 $("voice").addEventListener("change", () => {
 	$("ownbox").hidden = $("voice").value !== "own";
 });

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Make my voice — GeodeQuill</title>
+<meta name="description" content="Paste a few things you wrote and GeodeQuill measures how you write, in your browser, and hands you a voice file your AI app can use. Your text never leaves your device."/>
+<link rel="icon" href="../assets/logo-favicon-64.png" type="image/png"/>
+<link rel="canonical" href="https://geodeforge.com/geodequill/voice/"/>
+<link rel="stylesheet" href="../style.css?v=1"/>
+<style>
+  .voiceform label.f { display: block; font-weight: 600; margin: 1.1rem 0 .35rem; }
+  .voiceform input[type=text], .voiceform textarea, .voiceform select { width: 100%; box-sizing: border-box; font: inherit;
+    padding: .55rem .65rem; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.05); color: var(--text); }
+  .voiceform select option { background: var(--bg); color: var(--text); }
+  .voiceform textarea { min-height: 10rem; resize: vertical; }
+  .voiceform textarea.short { min-height: 4.5rem; }
+  .voiceform .hint { color: var(--muted); font-size: .92rem; margin: .2rem 0 0; }
+  .voiceform .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0 1rem; }
+  .btn { margin-top: 1.2rem; border: 0; cursor: pointer; font: inherit; }
+  .btn[disabled] { opacity: .55; cursor: wait; }
+  .actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .actions .btn { margin-top: .8rem; }
+  #status { min-height: 1.4em; margin: .8rem 0; color: var(--muted); }
+  .found { border-left: 3px solid var(--line); padding: .1rem 0 .1rem 1rem; }
+  .found p { margin: .55rem 0; }
+  .found .warn { color: var(--text); font-weight: 600; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 1rem 0 0; padding: .4rem 1rem 1rem; }
+  legend { font-weight: 600; padding: 0 .4rem; }
+  .pick { display: flex; gap: .55rem; align-items: baseline; margin: .45rem 0; }
+  .pick input { flex: none; }
+  #voicefile { min-height: 18rem; font-family: var(--mono); font-size: .85rem; line-height: 1.45; }
+  h2:focus { outline: none; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../"><img src="../assets/geodequill-nib.svg" alt="" width="32" height="32"/><span>GeodeQuill</span></a>
+  <nav><a href="../">← Back to GeodeQuill</a></nav>
+</header>
+
+<main class="prose">
+  <section>
+    <h1>Make my voice</h1>
+    <p class="sub">Paste a few things you wrote. GeodeQuill measures how you write, right here in your browser, and gives you a voice file your AI app can use. Your text never leaves this device.</p>
+
+    <form class="voiceform" id="sampleform" autocomplete="off">
+      <h2>1. Your samples</h2>
+      <label class="f" for="written">Things you wrote</label>
+      <textarea id="written" spellcheck="false" aria-describedby="writtenhint"></textarea>
+      <p class="hint" id="writtenhint">Three or more pieces, about 600 words in all or more: an email, a post, a letter. Put a line with three dashes (---) between pieces. Only text you wrote yourself; anything a tool helped write teaches the voice the wrong habits.</p>
+
+      <label class="f" for="spoken">Things you said (optional)</label>
+      <textarea id="spoken" class="short" spellcheck="false" aria-describedby="spokenhint"></textarea>
+      <p class="hint" id="spokenhint">Transcripts of you talking: a speech, a voice note, an interview. Only your own words, without names, times or questions from others. Separate pieces with a line of three dashes. These let the voice sound right when it writes something to be said aloud.</p>
+
+      <div class="row">
+        <div>
+          <label class="f" for="name">Name for this voice</label>
+          <input type="text" id="name" value="my-voice" aria-describedby="namehint"/>
+          <p class="hint" id="namehint">Short, like "work" or "casual".</p>
+        </div>
+        <div>
+          <label class="f" for="lang">Language of the samples</label>
+          <select id="lang">
+            <option value="">Work it out from the text</option>
+            <option value="en">English</option>
+            <option value="zh">Chinese</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="pt">Portuguese</option>
+            <option value="it">Italian</option>
+            <option value="nl">Dutch</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="vi">Vietnamese</option>
+            <option value="ru">Russian</option>
+            <option value="ar">Arabic</option>
+            <option value="hi">Hindi</option>
+            <option value="tr">Turkish</option>
+            <option value="pl">Polish</option>
+            <option value="th">Thai</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" id="measure" class="btn">Measure my samples</button>
+    </form>
+
+    <p id="status" role="status" aria-live="polite"></p>
+
+    <form class="voiceform" id="aboutform" autocomplete="off" hidden>
+      <h2 id="foundhead" tabindex="-1">2. What it found</h2>
+      <div class="found" id="found"></div>
+
+      <fieldset id="writtenpicks">
+        <legend>Phrases you repeat in your writing</legend>
+        <p class="hint">Tick up to five that sound like you. They go into the voice word for word.</p>
+        <div id="writtenlist"></div>
+        <label class="f" for="writtenown">Or type your own, one per line</label>
+        <textarea id="writtenown" class="short" spellcheck="false" aria-describedby="ownhint1"></textarea>
+        <p class="hint" id="ownhint1">Each must appear exactly like that in your writing, and be under twelve words.</p>
+      </fieldset>
+
+      <fieldset id="spokenpicks" hidden>
+        <legend>Phrases you repeat when you talk</legend>
+        <p class="hint">Tick up to five that sound like you.</p>
+        <div id="spokenlist"></div>
+        <label class="f" for="spokenown">Or type your own, one per line</label>
+        <textarea id="spokenown" class="short" spellcheck="false" aria-describedby="ownhint2"></textarea>
+        <p class="hint" id="ownhint2">Each must appear exactly like that in what you said, and be under twelve words.</p>
+      </fieldset>
+
+      <h2>3. About you (optional)</h2>
+      <p class="hint">Your own words go into the voice as you type them. Leave any of these empty.</p>
+      <label class="f" for="oneline">Your voice in one line</label>
+      <input type="text" id="oneline"/>
+      <label class="f" for="manner">How you want to come across</label>
+      <input type="text" id="manner" aria-describedby="mannerhint"/>
+      <p class="hint" id="mannerhint">For example: blunt or gentle, formal or casual, dry, warm or playful, how strongly you state opinions.</p>
+      <label class="f" for="audience">Who usually reads or hears you</label>
+      <input type="text" id="audience"/>
+      <label class="f" for="loves">Words and phrases you like to use</label>
+      <input type="text" id="loves"/>
+      <label class="f" for="never">Words you would never use</label>
+      <input type="text" id="never"/>
+      <label class="f" for="layout">Formatting habits</label>
+      <input type="text" id="layout" aria-describedby="layouthint"/>
+      <p class="hint" id="layouthint">For example: no bullet points, no emoji, exclamation marks only with friends.</p>
+
+      <button type="submit" id="make" class="btn">Make my voice file</button>
+    </form>
+
+    <section id="out" class="voiceform" hidden>
+      <h2 id="outhead" tabindex="-1">4. Your voice file</h2>
+      <label class="f" for="voicefile">Your voice file, ready to keep</label>
+      <textarea id="voicefile" readonly spellcheck="false"></textarea>
+      <div class="actions">
+        <button type="button" id="save" class="btn">Save</button>
+        <button type="button" id="copy" class="btn">Copy</button>
+        <button type="button" id="try" class="btn">Try it on the check page</button>
+      </div>
+      <h3>Using it</h3>
+      <p>In ChatGPT, in Claude on the web, and in phone apps, attach or paste the file at the start of any chat where you want your voice, then ask for "write this in my voice".</p>
+      <p>On a computer with GeodeQuill installed, save the file in the folder <code>.geodequill/voices</code> inside your home folder. Every AI tool on that computer can then use it.</p>
+      <p>GeodeQuill can also make a voice for you inside your AI app: say "set up my voice". It then writes a test piece and adjusts the voice from what you tell it.</p>
+    </section>
+
+    <h2>What it measures</h2>
+    <p>Sentence and paragraph length and how much they vary, contractions, punctuation, how sentences start, and, for speech, fillers and questions. The phrases and words in the file are the ones you choose. Each measure becomes a range from how your own pieces differ from each other. GeodeQuill writes to those ranges and checks its drafts against them.</p>
+
+    <h2>Your text stays here</h2>
+    <p>The measuring runs inside your browser. What you paste is never sent anywhere, the page loads its files only from this site, and nothing is kept after you close the page unless you save the file. The first time downloads the measuring engine, about 12 MB; your browser keeps it after that.</p>
+    <p>The engine is <a href="../check/pyodide-314.0.7/LICENSE">Pyodide</a>, which runs Python in a web page, used under the Mozilla Public License 2.0. The measuring is GeodeQuill's own checker, and you can <a href="https://github.com/GeodeForge/geodequill/blob/main/plugin/skills/geodequill/scripts/voice_check.py" rel="noopener">read every line</a>.</p>
+  </section>
+
+  <section class="morefrom">
+    <h2>More from GeodeForge</h2>
+    <div class="sibs">
+      <a href="https://geodeforge.com/geodeqr/">GeodeQR — free QR codes that never expire</a>
+      <a href="https://geodeforge.com/geodepdf/">GeodePDF — PDF tools that never upload your file</a>
+      <a href="https://geodeforge.com/geodecode/">GeodeCode — clean code and text before you paste it</a>
+    </div>
+    <a href="https://geodeforge.com/">See them all at geodeforge.com →</a>
+  </section>
+</main>
+
+<footer>
+  <span>
+    <a href="https://github.com/GeodeForge/geodequill" rel="noopener">Source</a> ·
+    <a href="../guide/">Guide</a> ·
+    <a href="../check/">Check a draft</a> ·
+    <a href="../privacy/">Privacy</a> ·
+    <a href="mailto:quill@geodeforge.com">quill@geodeforge.com</a>
+  </span>
+  <span>&copy; 2026 &middot; A <a href="https://geodeforge.com/">GeodeForge</a> tool</span>
+</footer>
+<script type="module" src="voice.js"></script>
+</body>
+</html>

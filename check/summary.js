@@ -1,6 +1,3 @@
-// GeodeQuill check page: turns the checker's report into a few plain sentences.
-// It reads only the report text the checker printed, so it can never say more than the report does.
-// It gives no verdict on who or what wrote the draft: the checker is not an AI detector.
 
 const FORMAT_KINDS = new Set(["Title Case heading", "bold-lead bullet", "emoji"]);
 

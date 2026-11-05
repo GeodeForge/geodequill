@@ -1,6 +1,3 @@
-// GeodeQuill check page: runs the checker (voice_check.py) in the visitor's browser with Pyodide.
-// Nothing typed here is sent anywhere. Every file comes from this site: the engine from
-// ./pyodide-314.0.7/, the checker and built-in voices from ../plugin/skills/geodequill/.
 import { loadPyodide } from "./pyodide-314.0.7/pyodide.mjs";
 import { plainSummary } from "./summary.js";
 

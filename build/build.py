@@ -117,6 +117,16 @@ GUIDE = """<!DOCTYPE html>
 __BODY__
     <p class="meta">Version __VERSION__ · __RELEASED__</p>
   </section>
+
+  <section class="morefrom">
+    <h2>More from GeodeForge</h2>
+    <div class="sibs">
+      <a href="https://geodeforge.com/geodeqr/">GeodeQR — free QR codes that never expire</a>
+      <a href="https://geodeforge.com/geodepdf/">GeodePDF — PDF tools that never upload your file</a>
+      <a href="https://geodeforge.com/geodecode/">GeodeCode — clean code and text before you paste it</a>
+    </div>
+    <a href="https://geodeforge.com/">See them all at geodeforge.com →</a>
+  </section>
 </main>
 
 <footer>

@@ -21,6 +21,8 @@
   #report { white-space: pre-wrap; word-wrap: break-word; background: rgba(255,255,255,.06); border: 1px solid var(--line);
     border-radius: 8px; padding: 1rem; font-family: var(--mono); font-size: .88rem; line-height: 1.5; }
   #report:empty { display: none; }
+  #plain { border-left: 3px solid var(--line); padding: .1rem 0 .1rem 1rem; }
+  #plain p { margin: .55rem 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -93,6 +95,11 @@
     </form>
 
     <p id="status" role="status" aria-live="polite"></p>
+    <div id="plainbox" hidden>
+      <h2>What it found</h2>
+      <div id="plain"></div>
+      <h2>The full report</h2>
+    </div>
     <pre id="report"></pre>
 
     <h2>What it checks</h2>

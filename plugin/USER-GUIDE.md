@@ -49,6 +49,8 @@ AI apps sometimes answer a short request themselves without opening GeodeQuill. 
 
 **"Allow code?"** Your app may ask permission to run code. That is GeodeQuill's checker. It only asks after you say yes to a check. Allowing it lets the checker run; saying no is fine, and the draft was still reviewed by reading.
 
+**Checking a draft yourself.** Paste any draft at geodeforge.com/geodequill/check/. The same checker runs there, inside your browser, and what you paste stays on your device.
+
 ## 5. Pick a voice or a tone
 
 - **"List my voices"** shows your saved voices, then the built-in ones, as a numbered list. Answer with a number or a name.

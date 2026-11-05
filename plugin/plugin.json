@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "geodequill",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Writes in a saved voice and personality, lets you pick from your saved voices, five built-in author voices and tones, and checks each draft for the habits that make text read as machine-written.",
   "author": {
     "name": "GeodeForge",

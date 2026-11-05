@@ -5,7 +5,7 @@ compatibility: Works in any agent that reads Agent Skills. The checker script ne
 license: MIT
 metadata:
   author: GeodeForge
-  version: "0.6.1"
+  version: "0.6.2"
 ---
 
 # GeodeQuill
@@ -28,7 +28,7 @@ Do steps 1 to 5 in order for every piece, however short; a two-line note gets al
 3. **Read it for invented claims.** Go through it sentence by sentence and cut, or turn into a bracketed note, anything it says about the writer's or the reader's life that the user did not give you (see "Never invent personal material" below).
 4. **Review it by reading.** Every piece, every time: go through it against `references/ai-tells.md` (machine-writing phrases and habits) and against the voice's Always and Never lines, and fix what you find. Do not run the checker here: it runs only when the user asks for it (step 6).
 5. **Deliver** the text with nothing before it, then, set apart after it, a closing note of one or two short sentences in the request's language: open placeholders, and for a real person only "Written in the style of <name>, not by <name>." (in the request's language), with nothing more about the person. End the note with one short question in the request's language offering the checker, such as "Want me to run the checker on it?" (skip the question in "Stay in voice" chat replies, and stop asking if the user says not to). Apart from that question the note says nothing about checking: no "checked", no codes, no claims that the text passed, is clean or reads as human.
-6. **When the user says yes** (or asks you to check any text): run the checker with code on exactly the final text (`references/write.md`, Check, step 3). Reply with what it found and what you changed, in a few plain lines, and give the corrected text if you changed anything. Report only that: no verdict on the text, such as that it has no invented facts, is clean or reads as human. If code cannot run in this app, say plainly that you can't run the checker's measurements here, then go through the text again by hand against `references/ai-tells.md` and the voice's Always and Never lines, and say what you changed (or that you found nothing to change). Give no numbers, scores or ranges: those come only from a real run. Never describe the results of a check that did not run.
+6. **When the user says yes** (or asks you to check any text): run the checker with code on exactly the final text (`references/write.md`, Check, step 3). Reply with what it found and what you changed, in a few plain lines, and give the corrected text if you changed anything. Report only that: no verdict on the text, such as that it has no invented facts, is clean or reads as human. If code cannot run in this app, say plainly that you can't run the checker's measurements here, then go through the text again by hand against `references/ai-tells.md` and the voice's Always and Never lines, and say what you changed (or that you found nothing to change). Then give the user the check page, https://geodeforge.com/geodequill/check/, where the checker's measurements run in their own browser and nothing they paste leaves it. Give no numbers, scores or ranges: those come only from a real run. Never describe the results of a check that did not run.
 
 ## Where voices are kept
 

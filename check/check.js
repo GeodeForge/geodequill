@@ -2,6 +2,7 @@
 // Nothing typed here is sent anywhere. Every file comes from this site: the engine from
 // ./pyodide-314.0.7/, the checker and built-in voices from ../plugin/skills/geodequill/.
 import { loadPyodide } from "./pyodide-314.0.7/pyodide.mjs";
+import { plainSummary } from "./summary.js";
 
 const SKILL = new URL("../plugin/skills/geodequill/", import.meta.url);
 const ENGINE = new URL("./pyodide-314.0.7/", import.meta.url).href;
@@ -10,6 +11,23 @@ let ready = null;
 
 function say(text) {
 	$("status").textContent = text;
+}
+
+function showPlain(sentences) {
+	const box = $("plain");
+	box.replaceChildren(...sentences.map((s) => {
+		const p = document.createElement("p");
+		p.textContent = s;
+		return p;
+	}));
+	$("plainbox").hidden = sentences.length === 0;
+}
+
+function voiceName() {
+	const sel = $("voice");
+	if (sel.value === "own") return "your voice";
+	if (!sel.value) return null;
+	return sel.options[sel.selectedIndex].text;
 }
 
 async function fetchText(url) {
@@ -52,6 +70,7 @@ $("checkform").addEventListener("submit", async (ev) => {
 	}
 	$("go").disabled = true;
 	$("report").textContent = "";
+	showPlain([]);
 	try {
 		const py = await engine();
 		say("Checking…");
@@ -72,6 +91,7 @@ $("checkform").addEventListener("submit", async (ev) => {
 		);
 		args.destroy();
 		$("report").textContent = report;
+		showPlain(plainSummary(report, voiceName()));
 		say("Done. Nothing you pasted left this page.");
 	} catch (err) {
 		say("The checker could not run in this browser: " + (err && err.message ? err.message : err));

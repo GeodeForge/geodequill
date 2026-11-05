@@ -10,7 +10,9 @@ Usage:
                                                          -> common words, sentence openers,
                                                             paragraph and sentence-length habits
   python3 -I voice_check.py scan FILE [--profile P.md] [--register written|spoken] [--tone NAME]
-                                [--lang CODE]            -> plain-text report
+                                [--lang CODE] [--before ORIGINAL]
+                                                         -> plain-text report; --before names the
+     text a rewrite started from and adds its reading level before and after
   python3 -I voice_check.py languages                    -> which languages get which checks
 
 Any language and script can be measured. The language is read from the script
@@ -18,6 +20,8 @@ Any language and script can be measured. The language is read from the script
 from its most common small words; the report says which it found and how.
 --lang CODE (en, zh, es, fr, ja ...) sets it instead. Chinese, Japanese and Thai
 have no spaces between words, so their lengths are counted in characters.
+Reading level (reading_lix) is LIX: words per sentence plus the percentage of
+words longer than six letters. It is measured for Latin-script text only.
   python3 -I voice_check.py tones [--json]               -> tones to choose from: the built-in
      list plus your own in ~/.geodequill/tones; scan --tone NAME loosens the voice's
      ranges in that tone's direction
@@ -514,6 +518,28 @@ def per(n, words, scale):
 
 LANG_NEUTRAL = ("sentence_cv", "paragraph_cv", "bullet_line_share")
 
+LATIN_LETTER = re.compile(r"[A-Za-z\u00C0-\u024F\u1E00-\u1EFF]")
+ANY_LETTER = re.compile(r"[^\W\d_]")
+LIX_BANDS = ((30, "very easy"), (40, "easy"), (50, "standard"), (60, "hard"))
+
+
+def lix(prose, sents):
+    tokens = WORD.findall(prose)
+    if not tokens or not sents:
+        return None
+    letters = len(ANY_LETTER.findall(prose))
+    if not letters or len(LATIN_LETTER.findall(prose)) < letters / 2:
+        return None
+    long_words = sum(1 for t in tokens if sum(c.isalpha() for c in t) > 6)
+    return round(len(tokens) / len(sents) + 100 * long_words / len(tokens), 1)
+
+
+def reading_level(score):
+    for top, name in LIX_BANDS:
+        if score < top:
+            return name
+    return "very hard"
+
 
 def metrics(raw, lang="en", unit=None):
     spec = LANGS.get(lang, {})
@@ -541,6 +567,9 @@ def metrics(raw, lang="en", unit=None):
             "sentence_cv": round(sd / mean, 2) if mean else 0.0,
         }
     if unit == "words" and lang not in NO_SENTENCE_MARKS:
+        score = lix(prose, sents)
+        if score is not None:
+            out["reading_lix"] = score
         out["short_sentence_share"] = round(sum(1 for n in lens if n <= 8) / len(lens), 2)
         out["long_sentence_share"] = round(sum(1 for n in lens if n >= 25) / len(lens), 2)
     out.update({
@@ -777,7 +806,19 @@ def language_mismatch(raw, requested):
     return None
 
 
-def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lang=None):
+def before_line(before, m, lang):
+    old = {}
+    if has_words(before):
+        info = resolve_language(before, lang)
+        old = metrics(before, info["code"], info["unit"])
+    was = (f"before {old['reading_lix']} ({reading_level(old['reading_lix'])})" if "reading_lix" in old
+           else "before not measured for this language")
+    now = (f"after {m['reading_lix']} ({reading_level(m['reading_lix'])})" if "reading_lix" in m
+           else "after not measured for this language")
+    return f"reading level: {was}, {now}"
+
+
+def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lang=None, before=None):
     if not has_words(raw):
         return EMPTY_MESSAGE
     info = resolve_language(raw, lang)
@@ -828,12 +869,14 @@ def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lan
                    ", ".join(f"{k} x{v}" for k, v in mild.items()))
     out.append("")
     out.append("== Habits ==" + (" (lengths and rates per character)" if info["unit"] == "characters" else ""))
-    for k in ("words", "avg_sentence_words", "sentence_cv", "paragraph_cv",
+    for k in ("words", "avg_sentence_words", "reading_lix", "sentence_cv", "paragraph_cv",
               "contractions_per_100w", "em_dashes_per_1000w",
               "questions_per_1000w", "fillers_per_1000w",
               "first_person_per_100w", "i_led_sentence_pct"):
         if k in m:
-            out.append(f"{k}: {m[k]}")
+            out.append(f"{k}: {m[k]}" + (f" ({reading_level(m[k])})" if k == "reading_lix" else ""))
+    if before is not None:
+        out.append(before_line(before, m, lang))
     out.append("")
     plang = profile_language(ptxt) if ptxt else None
     short = window_for(info["code"], info["unit"]) // 2
@@ -884,15 +927,22 @@ def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lan
     return "\n".join(out)
 
 
-def cmd_scan(path, profile, register="written", tone=None, lang=None):
+def cmd_scan(path, profile, register="written", tone=None, lang=None, before=None):
     raw = read_text(path)
     if raw is None:
         print(f"Cannot read {path}.")
         return 1
+    old = None
+    if before is not None:
+        old = read_text(before)
+        if old is None:
+            print(f"Cannot read {before}.")
+            return 1
     ptxt = read_text(profile) if profile else None
-    if path in DECODE_NOTES:
-        print("WARNING: " + DECODE_NOTES[path] + "\n")
-    report = scan_report(raw, ptxt, profile, register, tone, lang)
+    for f in (path, before):
+        if f in DECODE_NOTES:
+            print("WARNING: " + DECODE_NOTES[f] + "\n")
+    report = scan_report(raw, ptxt, profile, register, tone, lang, old)
     print(report)
     return 1 if report == EMPTY_MESSAGE else 0
 
@@ -902,7 +952,7 @@ TARGET_KEYS = ("avg_sentence_words", "sentence_cv", "paragraph_cv",
                "semicolons_per_1000w", "exclamations_per_1000w",
                "questions_per_1000w", "fillers_per_1000w",
                "first_person_per_100w", "i_led_sentence_pct",
-               "bullet_line_share")
+               "bullet_line_share", "reading_lix")
 
 def window_for(lang, unit):
     return 500 if unit == "words" else WINDOW_BY_LANG.get(lang, WINDOW_BY_LANG["zh"])
@@ -986,6 +1036,8 @@ def stats_result(texts, names=None, each=False, targets=False, lang=None):
                          for n, pm in zip(labels, (metrics(t, code, unit) for t in texts))}
     if targets:
         m["suggested"] = suggest_targets(texts, code, unit)
+    if "reading_lix" in m:
+        m["reading_level"] = reading_level(m["reading_lix"])
     m["language"] = info["tag"]
     m["language_how"] = info["how"]
     m["counted_in"] = unit
@@ -1136,6 +1188,21 @@ def find_voices(extra=()):
     return dirs + [BUILT_IN_VOICES], found
 
 
+def voice_key(name):
+    return re.sub(r"[\s_-]+", "-", (name or "").strip().lower()).strip("-")
+
+
+def find_voice(name, extra=()):
+    key = voice_key(name)
+    if not key:
+        return None
+    for v in find_voices(extra)[1]:
+        stem = os.path.splitext(os.path.basename(v["file"]))[0]
+        if key in (voice_key(v["name"]), voice_key(stem)):
+            return v["file"]
+    return None
+
+
 def cmd_voices(args):
     as_json = "--json" in args
     dirs, found = find_voices([a for a in args if not a.startswith("--")])
@@ -1165,6 +1232,7 @@ TONE_MEASURES = {
     "sentence length": ("avg_sentence_words",),
     "dashes": ("em_dashes_per_1000w",),
     "semicolons": ("semicolons_per_1000w",),
+    "reading level": ("reading_lix",),
 }
 
 
@@ -1278,6 +1346,14 @@ def main(argv):
         i = args.index("--tone")
         tone = args[i + 1] if i + 1 < len(args) else None
         args = args[:i] + args[i + 2:]
+    before = None
+    if "--before" in args:
+        i = args.index("--before")
+        before = args[i + 1] if i + 1 < len(args) else None
+        args = args[:i] + args[i + 2:]
+        if not before:
+            print("--before needs the file the rewrite started from")
+            return 2
     if "--register" in args:
         i = args.index("--register")
         register = args[i + 1] if i + 1 < len(args) else "written"
@@ -1288,7 +1364,7 @@ def main(argv):
     if not args:
         print(__doc__)
         return 2
-    return cmd_scan(args[0], profile, register, tone, lang)
+    return cmd_scan(args[0], profile, register, tone, lang, before)
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ Jane Austen (public domain): measured sentences held together by semicolons, wit
 
 ## Written habits
 - Sentence length: average 22 words, a wide mix: 22% are short, 32% are long
+- Reading level: easy (reading_lix 39.3)
 - Paragraphs: usually 3 to 4 sentences; about a fifth are a single sentence
 - Contractions: almost never (0.01 per 100 words)
 - Punctuation: heavy semicolons (12 per 1,000 words); some em dashes (3 per 1,000); few exclamation marks or questions (1 to 2 per 1,000)
@@ -52,6 +53,10 @@ Jane Austen (public domain): measured sentences held together by semicolons, wit
     "avg_sentence_words": [
       12.6,
       37.8
+    ],
+    "reading_lix": [
+      26.33,
+      58.27
     ],
     "sentence_cv": [
       0.49,

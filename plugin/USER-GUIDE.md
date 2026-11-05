@@ -54,8 +54,9 @@ AI apps sometimes answer a short request themselves without opening GeodeQuill. 
 ## 5. Pick a voice or a tone
 
 - **"List my voices"** shows your saved voices, then the built-in ones, as a numbered list. Answer with a number or a name.
-- **"List tones"** shows the tones: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic and persuasive.
+- **"List tones"** shows the tones: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic, persuasive and plain.
 - Or just name one: **"in a formal tone"**, **"make it slightly warmer"**, **"very casual"**.
+- **"Make it easier to read"**, **"simpler"** or **"less jargon"** uses the plain tone: everyday words and shorter sentences, with every fact kept. If you ask for a check, GeodeQuill tells you the reading level before and after: very easy, easy, standard, hard or very hard.
 
 A tone changes how your voice speaks, not who is speaking. You can describe a tone of your own and ask GeodeQuill to save it.
 

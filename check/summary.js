@@ -14,6 +14,7 @@ const MEASURES = {
 	first_person_per_100w: ["less \"I\", \"me\" and \"my\"", "more \"I\", \"me\" and \"my\""],
 	i_led_sentence_pct: ["fewer sentences that start with \"I\"", "more sentences that start with \"I\""],
 	bullet_line_share: ["fewer bulleted lines", "more bulleted lines"],
+	reading_lix: ["simpler wording (shorter sentences or shorter words)", "harder wording (longer sentences or longer words)"],
 };
 
 function plural(n, one, many) {
@@ -122,6 +123,15 @@ export function plainSummary(report, voiceLabel) {
 		if (flags.length) {
 			out.push("Rhythm: " + flags.map((f) => f.replace(/ \(variation [\d.]+\)/, "")).join("; ") + ".");
 		}
+	}
+	const change = report.match(/^reading level: before [\d.]+ \((.+?)\), after [\d.]+ \((.+?)\)$/m);
+	const level = report.match(/^reading_lix: [\d.]+ \((.+?)\)$/m);
+	if (change) {
+		out.push(change[1] === change[2]
+			? `Its reading level is ${change[2]}, the same as before.`
+			: `Its reading level went from ${change[1]} to ${change[2]}.`);
+	} else if (level) {
+		out.push(`Its reading level is ${level[1]}.`);
 	}
 	if (/English was assumed, not identified/.test(report)) {
 		out.push("It assumed the draft is English. If it isn't, pick its language above and check again.");

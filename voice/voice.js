@@ -151,6 +151,7 @@ function describeRegister(name, pieces, stats) {
 	let line = name + ": " + pieces + (pieces === 1 ? " piece" : " pieces") + ", about " + num(stats.words) + " " + unit;
 	const ln = langName(stats.language);
 	line += ln ? ", measured as " + ln + "." : ".";
+	if (stats.reading_level) line += " Reading level: " + stats.reading_level + ".";
 	return line;
 }
 
@@ -308,6 +309,7 @@ function habitLines(r, spokenOf) {
 		if (spokenOf && spokenOf.avg_sentence_words !== undefined) l += "; in writing " + spokenOf.avg_sentence_words;
 		out.push(l);
 	}
+	if (s.reading_lix !== undefined) out.push("- Reading level: " + s.reading_level + " (reading_lix " + s.reading_lix + ")");
 	if (!spokenOf && h.avg_sentences_per_paragraph !== undefined) {
 		const one = h.one_sentence_paragraph_pct ? h.one_sentence_paragraph_pct + "% are one sentence long" : "none are one sentence long";
 		out.push("- Paragraphs: usually " + h.avg_sentences_per_paragraph + " sentences; " + one);

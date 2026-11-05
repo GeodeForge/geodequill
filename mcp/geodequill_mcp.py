@@ -65,13 +65,7 @@ server = Server("geodequill", instructions=(
 
 
 def voice_path(name):
-    _dirs, found = vc.find_voices()
-    key = (name or "").strip().lower()
-    for v in found:
-        stem = os.path.splitext(os.path.basename(v["file"]))[0].lower()
-        if key in (v["name"].lower(), stem):
-            return v["file"]
-    return None
+    return vc.find_voice(name)
 
 
 @server.tool(description="Return GeodeQuill's instructions. part is one of: main, setup, write, "
@@ -124,7 +118,7 @@ def list_tones() -> str:
 @server.tool(description="Save the user's own tone as name.md in the personal tones folder. summary is one "
                          "line describing it. moves lists what it pushes up or down, for example "
                          "'contractions down, sentence length up'; measures: contractions, fillers, "
-                         "exclamations, questions, first person, sentence length, dashes, semicolons. "
+                         "exclamations, questions, first person, sentence length, dashes, semicolons, reading level. "
                          "guidance is a few lines on how to write in it.")
 def save_tone(name: str, summary: str, moves: str = "", guidance: str = "", overwrite: bool = False) -> str:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name or ""):
@@ -146,9 +140,12 @@ def save_tone(name: str, summary: str, moves: str = "", guidance: str = "", over
 @server.tool(description="Check a draft for machine-writing habits and, when a voice is named, compare it "
                          "with that voice's habits. register is written or spoken. tone, when one was "
                          "chosen, stops the tone's own shifts being flagged as off-voice. language is a code "
-                         "such as en, zh or es; leave it empty to read it from the text. Fix what the "
-                         "report flags; do not show the report to the user.")
-def check_draft(text: str, voice: str = "", register: str = "written", tone: str = "", language: str = "") -> str:
+                         "such as en, zh or es; leave it empty to read it from the text. before, when the "
+                         "user asked for a text to be made easier to read, is their original text; the "
+                         "report then gives the reading level before and after. Fix what the report "
+                         "flags; do not show the report to the user.")
+def check_draft(text: str, voice: str = "", register: str = "written", tone: str = "", language: str = "",
+                before: str = "") -> str:
     if register not in ("written", "spoken"):
         return "register must be written or spoken"
     profile, ptxt = None, None
@@ -156,7 +153,7 @@ def check_draft(text: str, voice: str = "", register: str = "written", tone: str
         path = voice_path(voice)
         profile = path or voice
         ptxt = vc.read_text(path) if path else None
-    return vc.scan_report(text, ptxt, profile, register, tone or None, language or None)
+    return vc.scan_report(text, ptxt, profile, register, tone or None, language or None, before or None)
 
 
 @server.tool(description="Measure writing samples for a voice profile. Pass one register at a time: all "

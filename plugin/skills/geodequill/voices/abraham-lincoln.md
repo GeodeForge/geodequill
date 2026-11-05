@@ -18,6 +18,7 @@ Abraham Lincoln (public domain): plain words in a step-by-step argument, courteo
 
 ## Written habits
 - Sentence length: average 24 words, a wide mix: 14% are short, 38% are long
+- Reading level: standard (reading_lix 43.3)
 - Paragraphs: usually about 5 sentences; a quarter are a single sentence
 - Contractions: almost never (0.05 per 100 words)
 - Punctuation: some semicolons (7 per 1,000 words) and em dashes (4 per 1,000); questions about 3 per 1,000; exclamation marks rare
@@ -26,6 +27,7 @@ Abraham Lincoln (public domain): plain words in a step-by-step argument, courteo
 
 ## Spoken habits
 - Sentence length: average 26 words, close to the page; "I" leads 14% of sentences
+- Reading level: standard (reading_lix 45.1)
 - Contractions: almost never (0.05 per 100 words)
 - Questions to the audience: about 5 per 1,000 words, twice the page rate, often answered at once
 - Fillers and turns: "But" opens about 4% of sentences, "If" about 4%; the checker counts about 1 filler per 1,000 words
@@ -65,6 +67,10 @@ Abraham Lincoln (public domain): plain words in a step-by-step argument, courteo
     "avg_sentence_words": [
       16.3,
       37.8
+    ],
+    "reading_lix": [
+      31.66,
+      59.54
     ],
     "sentence_cv": [
       0.38,
@@ -115,6 +121,10 @@ Abraham Lincoln (public domain): plain words in a step-by-step argument, courteo
     "avg_sentence_words": [
       17.86,
       38.54
+    ],
+    "reading_lix": [
+      34.66,
+      59.74
     ],
     "sentence_cv": [
       0.43,

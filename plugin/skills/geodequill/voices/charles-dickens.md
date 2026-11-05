@@ -17,6 +17,7 @@ Charles Dickens (public domain): long sentences crowded with things seen, stacke
 
 ## Written habits
 - Sentence length: average 32 words; over half are long (54%), few are short (13%)
+- Reading level: hard (reading_lix 51.0)
 - Paragraphs: usually about 4 sentences; about one in eight is a single sentence
 - Contractions: rarely (0.09 per 100 words), most often "don't", as in "I don't know how"
 - Punctuation: very heavy semicolons (15 per 1,000 words); some em dashes (3 per 1,000) and exclamation marks (2 per 1,000); few questions
@@ -25,6 +26,7 @@ Charles Dickens (public domain): long sentences crowded with things seen, stacke
 
 ## Spoken habits
 - Sentence length: average 42 words; nearly three in four are long, almost none are short (4%)
+- Reading level: very hard (reading_lix 62.6)
 - Contractions: almost never (0.04 per 100 words)
 - Punctuation as heard: many dashes (8 per 1,000 words) and semicolons (7 per 1,000)
 - Openers: "I" (18% of sentences), "The", "It", "But", "In", "And", and the address itself: "Ladies and gentlemen", "Now"
@@ -68,6 +70,10 @@ Charles Dickens (public domain): long sentences crowded with things seen, stacke
     "avg_sentence_words": [
       20.29,
       50.41
+    ],
+    "reading_lix": [
+      36.79,
+      71.61
     ],
     "sentence_cv": [
       0.38,
@@ -118,6 +124,10 @@ Charles Dickens (public domain): long sentences crowded with things seen, stacke
     "avg_sentence_words": [
       29.82,
       60.59
+    ],
+    "reading_lix": [
+      48.68,
+      84.42
     ],
     "sentence_cv": [
       0.37,

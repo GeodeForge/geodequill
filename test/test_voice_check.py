@@ -569,6 +569,7 @@ class Voices(unittest.TestCase):
             for ranges in targets.values():
                 for lo, hi in ranges.values():
                     self.assertLessEqual(lo, hi)
+                self.assertIn("reading_lix", ranges, name)
             phrases = re.findall(r'(?m)^  - (written|spoken): "(.+)"$', text)
             for register in ("written", "spoken") if spoken else ("written",):
                 mine = [p for r, p in phrases if r == register]
@@ -598,11 +599,13 @@ class Tones(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.home)
 
-    def test_twelve_built_in_tones_and_every_move_is_understood(self):
+    def test_thirteen_built_in_tones_and_every_move_is_understood(self):
         _code, out = run("tones", "--json", env=self.env)
         tones = json.loads(out)["tones"]
         self.assertEqual([t["name"] for t in tones][:3], ["professional", "formal", "casual"])
-        self.assertEqual(len(tones), 12)
+        self.assertEqual(len(tones), 13)
+        plain = [t for t in tones if t["name"] == "plain"][0]
+        self.assertEqual(plain["moves"], [["sentence length", "down"], ["reading level", "down"]])
         text = open(os.path.join(SKILL, "references", "tones.md"), encoding="utf-8").read()
         written = [len([m for m in line.split(":", 1)[1].split(",") if m.strip()])
                    for line in text.splitlines() if line.startswith("Moves:")]
@@ -632,6 +635,143 @@ class Tones(unittest.TestCase):
         profile = scratch('```json\n{"targets": {"contractions_per_100w": [2, 6], "em_dashes_per_1000w": [3, 9]}}\n```\n', suffix=".md")
         _code, out = run("scan", fx("human.txt"), "--profile", profile, "--tone", "formal", env=self.env)
         self.assertIn("loosened in its direction: em_dashes_per_1000w)", out)
+
+
+def load_checker():
+    sys.path.insert(0, os.path.join(SKILL, "scripts"))
+    was, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+    try:
+        import voice_check
+    finally:
+        sys.path.pop(0)
+        sys.dont_write_bytecode = was
+    return voice_check
+
+
+class ReadingLevel(unittest.TestCase):
+    """Reading level is LIX (Bjornsson 1968): words per sentence plus the percentage of words
+    longer than six letters. It is published, needs no word list, and works across Latin-script
+    languages, so it ships to any user. It is not language-neutral: a draft in another language
+    from the voice is not judged on it. Character-counted scripts get none, because a "word over
+    six letters" means nothing there; other alphabets are left out until someone measures them.
+    Design rule: with a voice, keep its measured level; "easier to read" asks
+    for simpler language than the text has (the plain tone)."""
+
+    def setUp(self):
+        self.home = tempfile.mkdtemp()
+        self.env = {"GEODEQUILL_HOME": self.home}
+
+    def tearDown(self):
+        shutil.rmtree(self.home)
+
+    def stats(self, text, *extra):
+        _code, out = run("stats", scratch(text), *extra, env=self.env)
+        return json.loads(out)
+
+    def test_the_score_follows_the_published_formula(self):
+        # 5 words, 2 sentences, 1 word over six letters: 5/2 + 100*1/5 = 22.5
+        m = self.stats("Extraordinary events happen. We wait.", "--lang", "en")
+        self.assertEqual(m["reading_lix"], 22.5)
+        self.assertEqual(m["reading_level"], "very easy")
+        # apostrophes and hyphens are not letters: "don't" has 4, "well-known" has 9
+        m = self.stats("I don't know. It is well-known.", "--lang", "en")
+        self.assertEqual(m["reading_lix"], round(6 / 2 + 100 * 1 / 6, 1))
+
+    def test_plain_names_follow_the_lix_bands(self):
+        vc = load_checker()
+        for lix, name in ((0, "very easy"), (29.9, "very easy"), (30, "easy"), (39.9, "easy"),
+                          (40, "standard"), (50, "hard"), (59.9, "hard"), (60, "very hard"), (85, "very hard")):
+            self.assertEqual(vc.reading_level(lix), name, lix)
+
+    def test_other_latin_script_languages_are_scored(self):
+        m = self.stats(open(fx("es-human.txt"), encoding="utf-8").read())
+        self.assertEqual(m["language"], "es")
+        self.assertIn("reading_lix", m)
+
+    def test_character_counted_scripts_and_other_alphabets_get_no_score(self):
+        for text in (open(fx("zh-human.txt"), encoding="utf-8").read(),
+                     open(fx("ja.txt"), encoding="utf-8").read(),
+                     "Это простой текст для проверки. Он очень короткий и ясный. Мы читаем его медленно."):
+            m = self.stats(text)
+            self.assertNotIn("reading_lix", m)
+            self.assertNotIn("reading_level", m)
+
+    def test_a_voice_gets_a_reading_range_and_each_file_a_score(self):
+        m = self.stats(open(fx("human.txt"), encoding="utf-8").read(), "--targets", "--each")
+        self.assertIn("reading_lix", m["suggested"]["targets"])
+        lo, hi = m["suggested"]["targets"]["reading_lix"]
+        self.assertLessEqual(lo, m["reading_lix"])
+        self.assertGreaterEqual(hi, m["reading_lix"])
+        self.assertIn("reading_lix", list(m["per_file"].values())[0])
+
+    def test_the_report_names_the_reading_level(self):
+        _code, out = run("scan", fx("human.txt"), env=self.env)
+        self.assertRegex(out, r"(?m)^reading_lix: [\d.]+ \((very easy|easy|standard|hard|very hard)\)$")
+        _code, out = run("scan", fx("zh-human.txt"), env=self.env)
+        self.assertNotIn("reading_lix", out)
+
+    def test_a_voice_holds_a_draft_to_its_reading_level(self):
+        profile = scratch('---\nlanguage: en\n---\n```json\n{"targets": {"reading_lix": [55, 70]}}\n```\n', suffix=".md")
+        draft = scratch("We went home. The dog ran out. It was a good day. We ate and slept.\n\n" * 12)
+        _code, out = run("scan", draft, "--profile", profile, env=self.env)
+        self.assertRegex(out, r"reading_lix: [\d.]+ \(profile 55 to 70\) OUTSIDE")
+
+    def test_a_draft_in_another_language_is_not_judged_on_reading_level(self):
+        profile = scratch('---\nlanguage: en\n---\n```json\n{"targets": {"reading_lix": [20, 25]}}\n```\n', suffix=".md")
+        _code, out = run("scan", fx("es-human.txt"), "--profile", profile, env=self.env)
+        self.assertRegex(out, r"reading_lix: [\d.]+ \(profile 20 to 25\) not judged: different language")
+
+    def test_the_plain_tone_lets_a_draft_read_easier_than_the_voice(self):
+        profile = scratch('---\nlanguage: en\n---\n```json\n{"targets": {"reading_lix": [45, 60], '
+                          '"avg_sentence_words": [16, 24]}}\n```\n', suffix=".md")
+        draft = scratch("We went home. The dog ran out. It was a good day. We ate and slept.\n\n" * 12)
+        _code, out = run("scan", draft, "--profile", profile, "--tone", "plain", env=self.env)
+        self.assertIn("(tone: plain; loosened in its direction: avg_sentence_words, reading_lix)", out)
+        self.assertRegex(out, r"reading_lix: [\d.]+ \(profile 0 to 60\) ok")
+
+    def test_an_easier_to_read_request_reports_before_and_after(self):
+        before = scratch("Notwithstanding considerable organisational complexity, implementation "
+                         "necessitates comprehensive stakeholder consultation throughout subsequent "
+                         "deliberations, particularly regarding infrastructure expenditure.\n")
+        after = scratch("The work is complex. We must ask everyone it affects before we decide. "
+                        "That matters most for what we spend on buildings.\n")
+        _code, out = run("scan", after, "--before", before, "--tone", "plain", env=self.env)
+        self.assertRegex(out, r"(?m)^reading level: before [\d.]+ \(very hard\), after [\d.]+ \((very easy|easy)\)$")
+        _code, out = run("scan", after, "--before", scratch("短文。"), env=self.env)
+        self.assertIn("reading level: before not measured for this language", out)
+        _code, out = run("scan", after, "--before", os.path.join(self.home, "missing.txt"), env=self.env)
+        self.assertIn("Cannot read", out)
+
+    def test_the_voice_layout_carries_the_reading_level(self):
+        text = open(os.path.join(SKILL, "references", "profile-template.md"), encoding="utf-8").read()
+        self.assertIn('"reading_lix"', text)
+        self.assertIn("Reading level:", text)
+
+
+class VoiceNames(unittest.TestCase):
+    """A built-in voice is found by the name a person types, not only by its file slug.
+    Spaces, hyphens, underscores and letter case are treated alike."""
+
+    def setUp(self):
+        self.home = tempfile.mkdtemp()
+        self.old = os.environ.get("GEODEQUILL_HOME")
+        os.environ["GEODEQUILL_HOME"] = self.home
+
+    def tearDown(self):
+        if self.old is None:
+            os.environ.pop("GEODEQUILL_HOME", None)
+        else:
+            os.environ["GEODEQUILL_HOME"] = self.old
+        shutil.rmtree(self.home)
+
+    def test_a_voice_is_found_however_its_name_is_typed(self):
+        vc = load_checker()
+        for typed in ("jane-austen", "Jane Austen", "jane_austen", "  JANE   AUSTEN ", "Jane-Austen"):
+            path = vc.find_voice(typed)
+            self.assertIsNotNone(path, typed)
+            self.assertEqual(os.path.basename(path), "jane-austen.md")
+        self.assertIsNone(vc.find_voice("nobody at all"))
+        self.assertIsNone(vc.find_voice(""))
 
 
 class Packaging(unittest.TestCase):
@@ -883,6 +1023,8 @@ class Connector(unittest.TestCase):
                     again = text(await call("save_voice", {"name": "twain", "profile": profile}))
                     listed = json.loads(text(await call("list_voices", {})))["voices"]
                     read = text(await call("read_voice", {"name": "twain-corpus"}))
+                    by_name = text(await call("read_voice", {"name": "Jane Austen"}))
+                    plainer = text(await call("check_draft", {"text": "We met. It went well.", "before": machine}))
                     checked = text(await call("check_draft", {"text": machine}))
                     against = text(await call("check_draft", {"text": machine, "voice": "twain"}))
                     measured = json.loads(text(await call("measure_samples", {"samples": [machine]})))
@@ -893,16 +1035,16 @@ class Connector(unittest.TestCase):
                     main = text(await call("get_instructions", {"part": "main"}))
                     prompts = [p.name for p in (await s.list_prompts()).prompts]
                     return (tools, empty, saved, again, listed, read, checked, against, measured, main, prompts,
-                            tones, saved_tone, bad_tone, toned)
+                            tones, saved_tone, bad_tone, toned, by_name, plainer)
 
         try:
             (tools, empty, saved, again, listed, read, checked, against, measured, main, prompts,
-             tones, saved_tone, bad_tone, toned) = asyncio.run(drive())
+             tones, saved_tone, bad_tone, toned, by_name, plainer) = asyncio.run(drive())
         finally:
             shutil.rmtree(home)
         self.assertEqual(tools, ["check_draft", "get_instructions", "list_tones", "list_voices",
                                  "measure_samples", "read_voice", "save_tone", "save_voice"])
-        self.assertEqual(len(tones), 12)
+        self.assertEqual(len(tones), 13)
         self.assertIn("Saved", saved_tone)
         self.assertIn("not understood", bad_tone)
         self.assertIn("(tone: board-letter; loosened in its direction: contractions_per_100w, em_dashes_per_1000w)", toned)
@@ -912,6 +1054,8 @@ class Connector(unittest.TestCase):
         self.assertEqual([v["name"] for v in listed], ["twain-corpus"] + BUILT_IN)
         self.assertEqual([v["built_in"] for v in listed][:2], [False, True])
         self.assertIn("## Targets", read)
+        self.assertRegex(by_name, r"(?m)^voice: jane-austen$")
+        self.assertRegex(plainer, r"(?m)^reading level: before [\d.]+ \(.+\), after [\d.]+ \(very easy\)$")
         self.assertGreaterEqual(summary(checked)[0], 8)
         self.assertIn("== Versus the voice profile (written) ==", against)
         self.assertIn("targets", measured["stats"]["suggested"])

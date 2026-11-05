@@ -11,7 +11,7 @@ Writes in a saved voice and personality, lets you pick from your saved voices, a
 
 AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at https://github.com/anthropics/skills). To make sure it's used, start with "Use GeodeQuill to…".
 
-A tone changes how a voice speaks, not who is speaking. Twelve come built in: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic and persuasive. You can describe your own and save it.
+A tone changes how a voice speaks, not who is speaking. Thirteen come built in: professional, formal, casual, friendly, modest, confident, intimate, playful, direct, diplomatic, empathetic, persuasive and plain. Plain is the one for "make it easier to read". You can describe your own and save it.
 
 You can keep several voices: a work voice, a casual voice, a character. Each voice keeps two sets of habits, written and spoken. Speeches, scripts and casual replies use the spoken set.
 
@@ -25,8 +25,8 @@ A simple step-by-step guide for users is in `USER-GUIDE.md`.
 - **Claude desktop app, the other way in:** install `geodequill.plugin`.
 - **Claude Code:** add the GitHub repository as a plugin marketplace with `/plugin marketplace add GeodeForge/geodequill`, then run `/plugin install geodequill@geodeforge`. To get new versions on their own, type `/plugin`, open Marketplaces, pick geodeforge, and choose Enable auto-update.
 - **ChatGPT:** in the sidebar, select Plugins, then the Skills tab. Select Create, then Upload from your computer, and choose `geodequill-skill.zip`. It runs inside ChatGPT; no server is needed. Skills are not on every ChatGPT plan yet: one OpenAI help page names the business plans, another says every paid plan except Free and Go.
-- **Any AI tool that reads Agent Skills** (the open SKILL.md format: Codex, GitHub Copilot, Gemini CLI, Cursor, VS Code, Windsurf, Goose and others): unzip `geodequill-skill.zip` into the tool's skills folder. Each tool documents where that folder is.
-- **Any AI tool that takes MCP connectors** (Claude Desktop, Cursor, VS Code, Windsurf, Zed, Cline and others): unzip `geodequill-mcp.zip`, install the MCP package with `pip install mcp`, and add the connector to the tool's MCP settings as a local command: `python3` (on Windows, `python`) followed by the full path to `geodequill_mcp.py` in the unzipped folder.
+- **Any AI tool that reads Agent Skills** (the open SKILL.md format: Codex, GitHub Copilot, Gemini CLI, Cursor, VS Code, Devin Desktop (formerly Windsurf), Goose and others): unzip `geodequill-skill.zip` into the tool's skills folder. Each tool documents where that folder is.
+- **Any AI tool that takes MCP connectors** (Claude Desktop, Cursor, VS Code, Devin Desktop (formerly Windsurf), Zed, Cline and others): unzip `geodequill-mcp.zip`, install the MCP package with `pip install mcp`, and add the connector to the tool's MCP settings as a local command: `python3` (on Windows, `python`) followed by the full path to `geodequill_mcp.py` in the unzipped folder.
 
 ## Where your voices are kept
 

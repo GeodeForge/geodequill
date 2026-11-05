@@ -6,7 +6,9 @@ A tone changes how the voice speaks this time. It never changes who is speaking:
 
 **Custom tones.** A user can describe a tone of their own and ask to save it. Save it as `<name>.md` in the `tones` folder beside the personal voices folder (`.geodequill/tones` in the home folder), with the same three parts as below: an "In one line:" line, a "Moves:" line, and a few lines of guidance.
 
-Each tone's "Moves:" line names the measures the tone pushes up or down. The checker uses it to stop flagging those shifts as off-voice. Measures: contractions, fillers, exclamations, questions, first person, sentence length, dashes, semicolons.
+Each tone's "Moves:" line names the measures the tone pushes up or down. The checker uses it to stop flagging those shifts as off-voice. Measures: contractions, fillers, exclamations, questions, first person, sentence length, dashes, semicolons, reading level.
+
+**Easier to read.** A request to make a text "easier to read", "simpler", "plainer", or to use "less jargon" asks for simpler language than the text already has. Use the plain tone below, at the strength the user asked for.
 
 ## professional
 In one line: Clear, courteous and businesslike, for colleagues, clients and anything work-related.
@@ -81,3 +83,11 @@ In one line: Makes a case and asks for something, for pitches, appeals and propo
 Moves: questions up, sentence length down
 - Lead with what the reader gains. End with one clear request.
 - Use only the user's real evidence; no invented numbers, quotes or testimonials.
+
+## plain
+In one line: Easier to read: everyday words and shorter sentences, with every fact kept.
+Moves: sentence length down, reading level down
+- Prefer the everyday word to the long or technical one. Explain a term the reader needs; replace one they do not.
+- Break long sentences up. One idea per sentence.
+- Keep every fact, number, name, date and caveat. Plainer is not shorter by dropping things.
+- It is still the same voice: keep its personality and attitude, and say it more simply.

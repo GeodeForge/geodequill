@@ -1,11 +1,11 @@
 ---
 name: geodequill
-description: Writes and rewrites text in a saved voice (the user's own, an invented character's, or a public-domain author's) and checks each draft for the habits that make prose read as machine-written. The author voices (Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln, Oscar Wilde) and the user's own voices are measured profiles stored in this skill, and each draft is checked against them, so use this skill for every such request, even a one-line note, in any language. Also builds voices from writing samples and lists saved voices and tones to choose from. Use when the user says "write this in my voice", "make this sound like me", "humanize this", "rewrite so it doesn't sound like AI", "set up my voice", "learn my writing style", "make a voice like Mark Twain", "write like Jane Austen", "list my voices", "switch voice", "use my work voice", "write a speech in my voice", "list tones", "pick a tone", "in a formal tone", "make it more casual", or "stay in my voice".
+description: Writes and rewrites text in a saved voice (the user's own, an invented character's, or a public-domain author's) and checks each draft for the habits that make prose read as machine-written. The author voices (Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln, Oscar Wilde) and the user's own voices are measured profiles stored in this skill, and each draft is checked against them, so use this skill for every such request, even a one-line note, in any language. Also builds voices from writing samples and lists saved voices and tones to choose from. Use when the user says "write this in my voice", "make this sound like me", "humanize this", "rewrite so it doesn't sound like AI", "set up my voice", "learn my writing style", "make a voice like Mark Twain", "write like Jane Austen", "list my voices", "switch voice", "use my work voice", "write a speech in my voice", "list tones", "pick a tone", "in a formal tone", "make it more casual", "make it easier to read", or "stay in my voice".
 compatibility: Works in any agent that reads Agent Skills. The checker script needs Python 3.8 or later; without Python the skill still works and drafts are reviewed by hand.
 license: MIT
 metadata:
   author: GeodeForge
-  version: "0.6.2"
+  version: "0.6.3"
 ---
 
 # GeodeQuill
@@ -13,7 +13,7 @@ metadata:
 Four jobs. Pick by what the user asked:
 
 - **Choose a voice:** "list my voices", "switch voice", or any writing request when more than one voice of the user's own is saved and none was named. Steps below.
-- **Choose a tone:** "list tones", "pick a tone", or a tone named in a request ("in a formal tone", "make it warmer"). Steps below.
+- **Choose a tone:** "list tones", "pick a tone", or a tone named in a request ("in a formal tone", "make it warmer"). "Easier to read", "simpler", "plainer" and "less jargon" name the plain tone. Steps below.
 - **Set up a voice:** follow `references/setup.md`.
 - **Write in a voice:** follow `references/write.md`.
 

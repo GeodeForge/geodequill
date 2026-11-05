@@ -17,6 +17,7 @@ Mark Twain (public domain): long, dash-and-semicolon sentences broken by short d
 
 ## Written habits
 - Sentence length: average 19 words, a wide mix: 28% are short, 27% are long
+- Reading level: easy (reading_lix 37.4)
 - Paragraphs: usually about 3 sentences; about a quarter are a single sentence
 - Contractions: rarely (0.35 per 100 words)
 - Punctuation: heavy em dashes (12 per 1,000 words) and semicolons (11 per 1,000); some exclamation marks and questions (about 2 per 1,000 each)
@@ -25,6 +26,7 @@ Mark Twain (public domain): long, dash-and-semicolon sentences broken by short d
 
 ## Spoken habits
 - Sentence length: average 19 words, the same as on the page, but much more often led by "I" (23% of sentences)
+- Reading level: easy (reading_lix 35.0)
 - Contractions: more than in writing (0.9 per 100 words), mostly "don't" and "didn't"
 - Fillers and turns: "now" and "well" each open about 2% of sentences; the checker counts about 2 fillers per 1,000 words
 - Questions to the audience: about 2 per 1,000 words
@@ -65,6 +67,10 @@ Mark Twain (public domain): long, dash-and-semicolon sentences broken by short d
     "avg_sentence_words": [
       12.16,
       28.04
+    ],
+    "reading_lix": [
+      28.76,
+      49.14
     ],
     "sentence_cv": [
       0.52,
@@ -115,6 +121,10 @@ Mark Twain (public domain): long, dash-and-semicolon sentences broken by short d
     "avg_sentence_words": [
       13.07,
       28.04
+    ],
+    "reading_lix": [
+      27.54,
+      45.26
     ],
     "sentence_cv": [
       0.49,

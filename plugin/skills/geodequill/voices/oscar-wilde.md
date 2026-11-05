@@ -18,6 +18,7 @@ Oscar Wilde (public domain): on the page, paradox and inversion, a short epigram
 
 ## Written habits
 - Sentence length: average 21 words, a wide mix: 23% are short, 29% are long
+- Reading level: standard (reading_lix 41.2)
 - Paragraphs: long, about 9 sentences (the dialogues run long speeches); about a sixth are a single sentence
 - Contractions: almost never (0.04 per 100 words)
 - Punctuation: light; some semicolons (4 per 1,000 words) and em dashes (2 per 1,000); questions about 2 per 1,000; exclamation marks rare
@@ -27,6 +28,7 @@ Oscar Wilde (public domain): on the page, paradox and inversion, a short epigram
 
 ## Spoken habits
 - Sentence length: average 33 words; over half are long, almost none are short (5%)
+- Reading level: hard (reading_lix 51.1)
 - Contractions: none in the lectures
 - Punctuation as heard: dashes (4 per 1,000 words) and semicolons (5 per 1,000); no exclamation marks
 - Openers: "The", "And" (9% of sentences), "I", "For" (6%), "It", "But"
@@ -69,6 +71,10 @@ Oscar Wilde (public domain): on the page, paradox and inversion, a short epigram
     "avg_sentence_words": [
       13.19,
       36.11
+    ],
+    "reading_lix": [
+      30.58,
+      57.12
     ],
     "sentence_cv": [
       0.48,
@@ -119,6 +125,10 @@ Oscar Wilde (public domain): on the page, paradox and inversion, a short epigram
     "avg_sentence_words": [
       18.55,
       56.35
+    ],
+    "reading_lix": [
+      37.2,
+      75.6
     ],
     "sentence_cv": [
       0.42,

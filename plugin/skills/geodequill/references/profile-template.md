@@ -23,6 +23,7 @@ samples: written <number of pieces>, about <number> words; spoken <number of pie
 
 ## Written habits
 - Sentence length: average <n> words, mix of <short/long>
+- Reading level: <very easy / easy / standard / hard / very hard> (reading_lix <n>)
 - Paragraphs: <usually n sentences; sometimes a one-line paragraph>
 - Contractions: <always / mostly / rarely>
 - Punctuation: <em dashes, semicolons, exclamation marks, ellipses, parentheses: how often>
@@ -56,6 +57,7 @@ samples: written <number of pieces>, about <number> words; spoken <number of pie
 {
   "targets": {
     "avg_sentence_words": [12, 18],
+    "reading_lix": [36, 46],
     "sentence_cv": [0.55, 0.9],
     "paragraph_cv": [0.3, 0.7],
     "contractions_per_100w": [1.5, 4],
@@ -66,6 +68,7 @@ samples: written <number of pieces>, about <number> words; spoken <number of pie
   },
   "targets_spoken": {
     "avg_sentence_words": [8, 16],
+    "reading_lix": [24, 36],
     "sentence_cv": [0.6, 1.1],
     "contractions_per_100w": [2, 6],
     "fillers_per_1000w": [1, 8],
@@ -76,3 +79,5 @@ samples: written <number of pieces>, about <number> words; spoken <number of pie
 ````
 
 The Targets block is read by `voice_check.py scan --profile` (written) and `scan --profile ... --register spoken` (spoken). Keys must match the names printed by `voice_check.py stats`. Each value is `[low, high]`.
+
+Reading level is `reading_lix`, from `stats`: words per sentence plus the share of words longer than six letters. Its plain names: under 30 very easy, 30 to 40 easy, 40 to 50 standard, 50 to 60 hard, 60 or more very hard. `stats` prints the plain name as `reading_level`. It is measured for Latin-script text only; leave the line out when `stats` gives none.

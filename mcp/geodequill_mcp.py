@@ -94,7 +94,7 @@ def read_voice(name: str) -> str:
 
 
 @server.tool(description="Save a voice profile as name.md in the personal voices folder, which every AI "
-                         "tool on this computer can read. name: lowercase letters, numbers and hyphens. "
+                         "app on this computer that has GeodeQuill installed can read. name: lowercase letters, numbers and hyphens. "
                          "Refuses to replace an existing voice unless overwrite is true.")
 def save_voice(name: str, profile: str, overwrite: bool = False) -> str:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name or ""):

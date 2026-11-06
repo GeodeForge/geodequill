@@ -64,7 +64,7 @@ You can keep several voices: a work voice, a casual voice, a character. GeodeQui
 
 ## 6. Where your voices are kept
 
-On your computer, in a folder named `.geodequill` inside your home folder. Every AI tool on that computer can use the same voices.
+On your computer, in a folder named `.geodequill` inside your home folder. Every AI app on that computer that has GeodeQuill installed can use the same voices.
 
 **In ChatGPT, in Claude on the web, and in phone apps,** each chat starts fresh and can't keep files. At the end of setup, GeodeQuill gives you your voice as a file or as text. Save it, and attach or paste it at the start of any chat where you want your voice.
 
@@ -73,7 +73,7 @@ On your computer, in a folder named `.geodequill` inside your home folder. Every
 - It won't promise to get past AI detectors. They guess, and they're often wrong.
 - It's built not to invent memories, quotes, numbers or opinions and put them in your mouth. Read the draft before you send it: no check catches every invented detail.
 - It won't use tricks like invisible characters or deliberate typos.
-- It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run.
+- It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
 
 ## 8. If something seems off
 

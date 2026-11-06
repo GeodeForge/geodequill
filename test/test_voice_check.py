@@ -507,7 +507,7 @@ class Languages(unittest.TestCase):
 
 class Voices(unittest.TestCase):
     """The picker shows every stored voice, from the project folder and the personal folder
-    that every AI tool on the computer shares, then the built-in voices that ship with the skill,
+    that every AI app with GeodeQuill on the computer shares, then the built-in voices that ship with the skill,
     and never touches the real home folder."""
 
     def setUp(self):

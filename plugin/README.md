@@ -30,7 +30,7 @@ A simple step-by-step guide for users is in `USER-GUIDE.md`.
 
 ## Where your voices are kept
 
-In a folder named `.geodequill/voices` inside your home folder; your own tones go in `.geodequill/tones` beside it. Every AI tool on the same computer reads the same folder, so a voice set up in one tool shows up in the others. To keep a voice with a single project instead, ask for it to be saved there; it goes in a `voice-profiles` folder in that project.
+In a folder named `.geodequill/voices` inside your home folder; your own tones go in `.geodequill/tones` beside it. Every AI app on the same computer that has GeodeQuill installed reads the same folder, so a voice set up in one app shows up in the others. To keep a voice with a single project instead, ask for it to be saved there; it goes in a `voice-profiles` folder in that project.
 
 In ChatGPT and other web chats, each chat starts fresh. The voice is given to you at the end of setup; save it, and attach or paste it at the start of a later chat.
 
@@ -57,11 +57,11 @@ Add the skill on chatgpt.com, if the plan has skills. Whether the ChatGPT phone 
 
 Chat apps that accept neither skills nor MCP connectors cannot load GeodeQuill. ChatGPT plans without skills cannot add it; OpenAI's help pages disagree on which plans those are. The MCP connector does not work in ChatGPT, which takes connectors only from a server on the internet; ChatGPT users use the skill instead.
 
-GeodeQuill writes in any language. The checker measures punctuation, layout and paragraph rhythm in any language and script, and sentence rhythm wherever the script marks where sentences end (Thai, Lao and Tibetan do not). Its lists of machine-writing phrases and words cover English, Chinese (simplified and traditional) and Spanish; for other languages its report says those were not checked.
+GeodeQuill writes in any language. The checker measures punctuation, layout and paragraph rhythm in any language and script, and sentence rhythm wherever the script marks where sentences end (Thai, Lao and Tibetan do not). Its lists of machine-writing phrases and words cover English, Chinese (simplified and traditional) and Spanish; for other languages its report says those were not checked. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
 
 ## How it was checked
 
-The checker was run over three collections of human writing: 23 books by Mark Twain (1.74 million words), 85,000 words of his speeches, and 141 documents that ship with ordinary software packages (192,000 words). Its strong flags fired 0.2 to 0.3 times per 10,000 words in all three. A 108-word machine-style sample drew 10. No collection of real machine-written text has been measured yet. None of this shows how any AI detector will score a piece.
+The checker was run over three collections of human writing: 23 books by Mark Twain (1.74 million words), 85,000 words of his speeches, and 141 documents that ship with ordinary software packages (192,000 words). Its strong flags fired 0.2 to 0.3 times per 10,000 words in all three. A 108-word machine-style sample drew 10. In November 2026 it was also run on 705 texts from 2026 AI models. A strong flag appeared in 10.5% of them, against 31.5% of texts from older models and 3.6% of 500 human texts. The newest top models drew almost none, so the phrase lists are a backstop; the comparison with your own voice does most of the work. None of this shows how any AI detector will score a piece.
 
 ## Credits
 

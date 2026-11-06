@@ -27,7 +27,7 @@ words longer than six letters. It is measured for Latin-script text only.
      ranges in that tone's direction
   python3 -I voice_check.py voices [FOLDER ...] [--json] -> saved voices to choose from: the
      project's voice-profiles folder, then the personal folder ~/.geodequill/voices
-     (or $GEODEQUILL_HOME/voices), which every AI tool on this computer can share,
+     (or $GEODEQUILL_HOME/voices), which every AI app with GeodeQuill on this computer can share,
      then the built-in voices of public-domain authors; your own voice of the same
      name hides a built-in one
 

@@ -5,7 +5,7 @@ compatibility: Works in any agent that reads Agent Skills. The checker script ne
 license: MIT
 metadata:
   author: GeodeForge
-  version: "0.6.3"
+  version: "0.6.4"
 ---
 
 # GeodeQuill
@@ -32,7 +32,7 @@ Do steps 1 to 5 in order for every piece, however short; a two-line note gets al
 
 ## Where voices are kept
 
-- **Personal voices:** the folder `.geodequill/voices` in the user's home folder, or `voices` inside the folder named by the `GEODEQUILL_HOME` setting. Every AI tool on the same computer can read them. Save here unless the user asks otherwise.
+- **Personal voices:** the folder `.geodequill/voices` in the user's home folder, or `voices` inside the folder named by the `GEODEQUILL_HOME` setting. Every AI app on the same computer that has GeodeQuill installed can read them. Save here unless the user asks otherwise.
 - **Your own tones:** the folder `.geodequill/tones` beside the personal voices. The built-in tones are listed in `references/tones.md`.
 - **Project voices:** a `voice-profiles` folder in the current working folder, for a voice that belongs to one project.
 - **Built-in voices:** the `voices` folder in this skill: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde, measured from their public-domain works. Each profile lists its sources. A voice of the user's own with the same name hides the built-in one. Never save into this folder.

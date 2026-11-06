@@ -24,7 +24,7 @@ A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
   English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation,
   layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai,
   Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check
-  didn't run.
+  didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
 
 ## What's in here
 
@@ -34,7 +34,7 @@ A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
 | `mcp/` | The same skill served as an MCP connector, for tools that take connectors. |
 | `test/` | The tests, with their sample texts. |
 | `download/` | The ready-made files the web page offers. `build/build.py` makes them, and the guide page, from the sources. |
-| `index.html`, `guide/`, `privacy/`, `style.css`, `assets/` | The web page at geodeforge.com/geodequill. |
+| `index.html`, `guide/`, `privacy/`, `check/`, `voice/`, `style.css`, `assets/` | The web page at geodeforge.com/geodequill, with the Check a draft and Make my voice pages. |
 
 Claude Code can install straight from this repository:
 `/plugin marketplace add GeodeForge/geodequill`, then `/plugin install geodequill@geodeforge`.

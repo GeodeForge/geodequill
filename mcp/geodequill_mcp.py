@@ -61,7 +61,8 @@ server = Server("geodequill", instructions=(
     "GeodeQuill writes in a saved voice and checks drafts for machine-writing habits. "
     "Call get_instructions first and follow it. In this connector the tools replace the script "
     "commands the instructions mention: list_voices for voices, list_tones for tones, check_draft for "
-    "scan, measure_samples for stats and habits, read_voice, save_voice and save_tone for files."))
+    "scan, measure_samples for stats and habits, learn_voice for learn, protected_words for keep, "
+    "read_voice, save_voice and save_tone for files."))
 
 
 def voice_path(name):
@@ -143,9 +144,10 @@ def save_tone(name: str, summary: str, moves: str = "", guidance: str = "", over
                          "such as en, zh or es; leave it empty to read it from the text. before, when the "
                          "user asked for a text to be made easier to read, is their original text; the "
                          "report then gives the reading level before and after. Fix what the report "
-                         "flags; do not show the report to the user.")
+                         "flags; do not show the report to the user. keep lists words or phrases that must "
+                         "appear exactly; the user's saved protected words are judged too when before is given.")
 def check_draft(text: str, voice: str = "", register: str = "written", tone: str = "", language: str = "",
-                before: str = "") -> str:
+                before: str = "", keep: list[str] | None = None) -> str:
     if register not in ("written", "spoken"):
         return "register must be written or spoken"
     profile, ptxt = None, None
@@ -153,7 +155,37 @@ def check_draft(text: str, voice: str = "", register: str = "written", tone: str
         path = voice_path(voice)
         profile = path or voice
         ptxt = vc.read_text(path) if path else None
-    return vc.scan_report(text, ptxt, profile, register, tone or None, language or None, before or None)
+    return vc.scan_report(text, ptxt, profile, register, tone or None, language or None, before or None,
+                          keep or [], vc.saved_keep())
+
+
+@server.tool(description="Learn from the user's own edits: add text the user edited or wrote to a saved voice as "
+                         "a sample and re-measure its ranges, saving the voice. edited is the user's version only, "
+                         "never your draft. draft, when the user edited a draft of yours, is that draft: text that is "
+                         "still mostly the draft is refused. register is written or spoken. Built-in voices do not "
+                         "learn.")
+def learn_voice(voice: str, edited: str, register: str = "written", draft: str = "", language: str = "") -> str:
+    if register not in ("written", "spoken"):
+        return "register must be written or spoken"
+    path = voice_path(voice)
+    if not path:
+        return f"No saved voice named {voice}. Call list_voices to see the names."
+    if vc.is_built_in(path):
+        return "Built-in voices do not learn. Save a copy as a voice of the user's own and learn into that."
+    res = vc.learn_result(vc.read_text(path) or "", [edited], register, language or None, draft or None)
+    if res["ok"]:
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            f.write(res["profile"])
+        return f"Saved {path}\n" + "\n".join(res["lines"])
+    return "\n".join(res["lines"])
+
+
+@server.tool(description="The user's protected words: words and phrases a rewrite must keep exactly, such as "
+                         "product names and set phrases. add and remove change the saved list; with neither, it is "
+                         "only listed.")
+def protected_words(add: list[str] | None = None, remove: list[str] | None = None) -> str:
+    items = vc.change_keep(add or [], remove or []) if add or remove else vc.saved_keep()
+    return json.dumps({"file": vc.keep_path(), "protected": items}, indent=2, ensure_ascii=False)
 
 
 @server.tool(description="Measure writing samples for a voice profile. Pass one register at a time: all "

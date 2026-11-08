@@ -38,6 +38,11 @@ At the end it writes a short test paragraph and asks whether it sounds like you.
 - **"Write this in my voice:"** followed by your notes.
 - **"Make this sound like me:"** followed by text you want rewritten. It keeps every fact and changes only the wording.
 - **"Stay in my voice."** Everything it writes for the rest of the chat uses your voice.
+- **"Light edit"**, **"just polish"** or **"keep my wording":** followed by your text. It fixes typos, grammar and machine-sounding phrases and leaves your sentences as you wrote them. No voice is needed for this.
+
+**Words it must never change.** Tell it which words to keep exactly, such as product names or a set phrase: **"keep 'Net 30' exactly"**. Every rewrite keeps them as you wrote them. It offers to save them so you don't have to repeat them; to see the saved list, ask **"what are my protected words?"** If you ask for a check, the checker tells you if one went missing.
+
+**Teach it from your edits.** When you change a draft to how you'd really say it, paste your version back and say **"here's how I changed it, learn from that."** Your voice is measured again with your edit added, and it tells you what moved. Only your own words count: if your version is still mostly its draft, it says so and changes nothing. A short edit may not be enough on its own; it can gather a few and learn them together.
 
 If a real example or number would make the piece better, it asks you for one instead of making it up.
 
@@ -60,11 +65,13 @@ AI apps sometimes answer a short request themselves without opening GeodeQuill. 
 
 A tone changes how your voice speaks, not who is speaking. You can describe a tone of your own and ask GeodeQuill to save it.
 
-You can keep several voices: a work voice, a casual voice, a character. GeodeQuill also comes with five built-in voices of famous authors whose books are free of copyright: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Say **"write this like Jane Austen"**, or pick one from the list. You can build others the same way. Writing in a real person's voice is always labelled "in the style of" them.
+You can keep several voices: a work voice, a casual voice, a character. GeodeQuill also comes with ten built-in voices of famous writers whose work is free of copyright: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln, Oscar Wilde, Frederick Douglass, Louisa May Alcott and Will Rogers in English, Lu Xun in Chinese and José Martí in Spanish. Say **"write this like Jane Austen"**, or pick one from the list. You can build others the same way. Writing in a real person's voice is always labelled "in the style of" them.
 
 ## 6. Where your voices are kept
 
-On your computer, in a folder named `.geodequill` inside your home folder. Every AI app on that computer that has GeodeQuill installed can use the same voices.
+On your computer, in a folder named `.geodequill` inside your home folder. Every AI app on that computer that has GeodeQuill installed can use the same voices. Your protected words are kept there too.
+
+A voice is one small file, so you can hand it to a teammate and their GeodeQuill writes in it too. Send them the voice file; they add it to their own `.geodequill/voices` folder, or attach it in a chat.
 
 **In ChatGPT, in Claude on the web, and in phone apps,** each chat starts fresh and can't keep files. At the end of setup, GeodeQuill gives you your voice as a file or as text. Save it, and attach or paste it at the start of any chat where you want your voice.
 
@@ -73,11 +80,11 @@ On your computer, in a folder named `.geodequill` inside your home folder. Every
 - It won't promise to get past AI detectors. They guess, and they're often wrong.
 - It's built not to invent memories, quotes, numbers or opinions and put them in your mouth. Read the draft before you send it: no check catches every invented detail.
 - It won't use tricks like invisible characters or deliberate typos.
-- It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
+- It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional), Spanish, Japanese, Korean, Turkish, German, Russian and Finnish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
 
 ## 8. If something seems off
 
-- **It doesn't sound like you:** give it more samples, especially casual ones, and say "update my voice".
+- **It doesn't sound like you:** give it more samples, especially casual ones, and say "update my voice". Or edit one of its drafts the way you'd write it, paste your version back, and say "learn from that".
 - **It asks to set up a voice when you already have one:** in ChatGPT, attach your saved voice file first. Elsewhere, say "list my voices" to check it's there.
 - **It doesn't seem to be using GeodeQuill** (no voice, no "in the style of" label, no note at the end): start the request with "Use GeodeQuill to…".
 

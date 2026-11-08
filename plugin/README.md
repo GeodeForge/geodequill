@@ -8,6 +8,9 @@ Writes in a saved voice and personality, lets you pick from your saved voices, a
 2. Say "list my voices" to see your saved voices and pick one. Say "list tones" to pick a tone, or just name one: "write this in a formal tone", "make it slightly warmer".
 3. Say "write this in my voice", or paste text and say "make this sound like me".
 4. Say "stay in my voice" to keep the voice for the rest of the conversation.
+5. Say "light edit" or "keep my wording", with your text, to fix typos and machine-sounding phrases without rewriting your sentences.
+6. Edit a draft the way you'd write it, paste your version back and say "learn from that". The voice is measured again with your edit added; only your own words count.
+7. Name words it must never change ("keep 'Net 30' exactly"), such as product names. Rewrites keep them exactly, it can save them for next time, and the checker reports any that went missing.
 
 AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at https://github.com/anthropics/skills). To make sure it's used, start with "Use GeodeQuill to…".
 
@@ -30,7 +33,9 @@ A simple step-by-step guide for users is in `USER-GUIDE.md`.
 
 ## Where your voices are kept
 
-In a folder named `.geodequill/voices` inside your home folder; your own tones go in `.geodequill/tones` beside it. Every AI app on the same computer that has GeodeQuill installed reads the same folder, so a voice set up in one app shows up in the others. To keep a voice with a single project instead, ask for it to be saved there; it goes in a `voice-profiles` folder in that project.
+In a folder named `.geodequill/voices` inside your home folder; your own tones go in `.geodequill/tones` beside it. Every AI app on the same computer that has GeodeQuill installed reads the same folder, so a voice set up in one app shows up in the others. To keep a voice with a single project instead, ask for it to be saved there; it goes in a `voice-profiles` folder in that project. Protected words are kept in `.geodequill/keep.md`.
+
+A voice is one small file, so you can hand it to a teammate and their GeodeQuill writes in it too.
 
 In ChatGPT and other web chats, each chat starts fresh. The voice is given to you at the end of setup; save it, and attach or paste it at the start of a later chat.
 
@@ -57,7 +62,7 @@ Add the skill on chatgpt.com, if the plan has skills. Whether the ChatGPT phone 
 
 Chat apps that accept neither skills nor MCP connectors cannot load GeodeQuill. ChatGPT plans without skills cannot add it; OpenAI's help pages disagree on which plans those are. The MCP connector does not work in ChatGPT, which takes connectors only from a server on the internet; ChatGPT users use the skill instead.
 
-GeodeQuill writes in any language. The checker measures punctuation, layout and paragraph rhythm in any language and script, and sentence rhythm wherever the script marks where sentences end (Thai, Lao and Tibetan do not). Its lists of machine-writing phrases and words cover English, Chinese (simplified and traditional) and Spanish; for other languages its report says those were not checked. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
+GeodeQuill writes in any language. The checker measures punctuation, layout and paragraph rhythm in any language and script, and sentence rhythm wherever the script marks where sentences end (Thai, Lao and Tibetan do not). Its lists of machine-writing phrases and words cover English, Chinese (simplified and traditional), Spanish, Japanese, Korean, Turkish, German, Russian and Finnish; for other languages its report says those were not checked. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.
 
 ## How it was checked
 
@@ -67,7 +72,7 @@ The checker was run over three collections of human writing: 23 books by Mark Tw
 
 The tell list builds on Wikipedia's "Signs of AI writing" catalogue (WikiProject AI Cleanup) and the idea behind existing humanizer skills such as blader/humanizer. Common tone presets (formal, casual, friendly, confident, empathetic, persuasive and others, with a strength setting) are standard across writing tools; GeodeQuill layers them on a measured voice. GeodeQuill adds saved, measured voices with written and spoken habits, the voice and tone pickers, and the checker.
 
-The Chinese list takes its categories from Humanizer-zh (op7418) and the Spanish list is adapted from Signs of AI Writing (PeopleWorks), both MIT. The Spanish common words used to tell languages apart come from the Snowball stop-word list (BSD). The traditional-Chinese table was generated with OpenCC. The notices are in `skills/geodequill/LICENSE.txt`.
+The Chinese list takes its categories from Humanizer-zh (op7418) and the Spanish list is adapted from Signs of AI Writing (PeopleWorks), both MIT. The Spanish common words used to tell languages apart come from the Snowball stop-word list (BSD). The traditional-Chinese table was generated with OpenCC. The Japanese, Korean, Turkish, German, Russian and Finnish lists are drawn from seven published MIT lists, each named there. The notices are in `skills/geodequill/LICENSE.txt`.
 
 ## Feedback
 

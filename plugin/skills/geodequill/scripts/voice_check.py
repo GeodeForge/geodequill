@@ -10,9 +10,22 @@ Usage:
                                                          -> common words, sentence openers,
                                                             paragraph and sentence-length habits
   python3 -I voice_check.py scan FILE [--profile P.md] [--register written|spoken] [--tone NAME]
-                                [--lang CODE] [--before ORIGINAL]
+                                [--lang CODE] [--before ORIGINAL] [--keep WORDS ...]
                                                          -> plain-text report; --before names the
-     text a rewrite started from and adds its reading level before and after
+     text a rewrite started from and adds its reading level before and after and how
+     much of its wording changed; --keep (repeatable) names words or phrases that must
+     appear exactly, and the report lists any that are missing or altered. Your saved
+     protected words (see keep) are judged too whenever --before is given.
+  python3 -I voice_check.py learn EDITED [EDITED ...] --profile P.md|NAME [--register written|spoken]
+                                [--draft DRAFT] [--lang CODE] [--write]
+                                                         -> adds your own edited text to a voice as
+     a sample and re-measures its ranges; --draft is the AI's draft you edited (text
+     that is mostly the draft unchanged is refused); without --write it only shows
+     what would change
+  python3 -I voice_check.py keep [--add WORDS ...] [--remove WORDS ...]
+                                                         -> your protected words, kept in
+     ~/.geodequill/keep.md (or $GEODEQUILL_HOME/keep.md): words and phrases a rewrite
+     must never change
   python3 -I voice_check.py languages                    -> which languages get which checks
 
 Any language and script can be measured. The language is read from the script
@@ -33,9 +46,12 @@ words longer than six letters. It is measured for Latin-script text only.
 
 Standard library only. It reports habits it can count. It does NOT predict
 what any AI detector will say and never prints an AI-probability score.
-Exit codes: 0 done, 1 a file could not be read or scan found no words, 2 wrong usage.
+Exit codes: 0 done, 1 a file could not be read or scan found no words, 2 wrong usage,
+3 learn changed nothing (the message says why).
 """
+import difflib
 import json
+import math
 import os
 import re
 import statistics
@@ -205,6 +221,225 @@ ES_PATTERNS = [
 
 FIRST_PERSON_EN = re.compile(r"\b(?:I|I'm|I've|I'll|I'd|my|me)\b")
 
+# Japanese, Korean, Turkish, German, Russian and Finnish (0.6.5). Drawn from published lists (see
+# LICENSE.txt) and cut down on human writing dated before November 2022: novels and stories, the
+# translated Python documentation and Pro Git, Wikipedia and Wikisource. An entry that fired on
+# that writing more than 0.05 times per 10,000 words was dropped or moved to the mild list.
+# These languages are matched on folded lower-case text (see fold_tr, fold_ru), so the lists are
+# written in lower case.
+
+
+def fold_lower(s):
+    return s.lower()
+
+
+def fold_tr(s):
+    """Turkish lower case: I is dotless ı and İ is i. Keeps every character in place."""
+    return s.replace("İ", "i").replace("I", "ı").lower()
+
+
+def fold_ru(s):
+    """Russian lower case with ё read as е, as most Russian is typed."""
+    return s.lower().replace("ё", "е")
+
+
+def _rx(*parts):
+    return re.compile("|".join(parts))
+
+
+JA_WORDS = _rx(
+    "多面的な", "包括的な", "画期的な", "計り知れない", "パラダイムシフト", "新たな地平", "唯一無二の",
+    "他に類を見ない", "シナジー", "ソリューション", "インサイト", "レジリエンス",
+    # density phrases from patina's Japanese lexicon: weak alone, by that lexicon's own note
+    "本記事では", "この記事では", "ぜひ参考にしてください", "現代社会において", "デジタル時代において",
+    "欠かせない存在", "重要な鍵とな", "持続可能な成長", "より良い未来", "新たな選択肢", "未来を切り拓く",
+    "可能性を広げる", "価値を最大化", "最大限に引き出す", "これからの時代に求められる")
+JA_PHRASES = [
+    "浮き彫りにしており", "今後の展開が注目", "今後の展開に注目", "と言えるでしょう", "重要な示唆を与え",
+    "重要な役割を果た", "素晴らしいご質問", "素晴らしい質問", "良いご指摘ですね", "鋭いご指摘ですね",
+    "が注目を集めています", "今後ますます重要に", "さらなる発展が期待", "今後の発展が期待",
+    "急速に変化する現代社会", "と言っても過言ではない", "お役に立てれば幸い", "ご不明な点がございましたら",
+    "さらに詳しい情報が必要な場合", "お気軽にお尋ねください", "最新の情報と異なる場合があります",
+    "周知の通り", "注目すべきは", "特筆すべきは", "と言えるかもしれない", "大きな可能性を秘めて",
+    "無限の可能性", "新たな章の幕開け", "誰も教えてくれない", "について理解しておく必要があります",
+]
+JA_MILD = [
+    "しかしながら", "加えて", "とりわけ", "このように", "これにより", "これを踏まえ", "まとめると", "結論として",
+    "総じて", "以上のことから", "を示しており", "を物語っています", "いただけますと幸いです",
+    "注目に値する", "重要なのは", "見ていきましょう", "することが重要です", "言うまでもなく",
+]
+JA_PATTERNS = [
+    ("negative parallelism (単なる…ではなく)", re.compile(r"単なる[^。\n]{1,40}?ではなく")),
+    ("template opener (ここでは…について解説します)", re.compile(r"ここでは[^。\n]{0,40}?について解説します")),
+    ("template opener (近年、…急速に進展)", re.compile(r"近年[、,][^。\n]{0,40}?急速に進展")),
+    ("vague attribution (専門家によると)", re.compile(r"(?:業界の)?専門家によると|業界関係者によると|多くの企業が指摘しているように")),
+    ("stacked hedge (おそらく…かもしれない)", re.compile(r"おそらく[^。\n]{0,40}?かもしれない|ある程度[^。\n]{0,40}?可能性がある")),
+    ("template ending (…が期待されます。)", re.compile(r"が期待され(?:ます|る)。?\s*$")),
+]
+
+KO_WORDS = _rx(
+    "가시화", "자리매김", "일환", "차별화", "혁신적인", "획기적인", "괄목할 만한", "무궁무진한", "고무적인",
+    "시너지", "솔루션", "인사이트", "패러다임", "심층적인", "선도적인", "극대화")
+KO_PHRASES = [
+    # "중요한 역할을", "필요가 있습니다", "있습니다. 또한,", "영향을 미칩니다." and "새로운 가능성을" were in
+    # patina's lexicon; all ran above the line in Korean Wikipedia or the Korean Python docs.
+    "있으며, 이는", "라고 할 수 있습니다", "시사점을 제공", "과언이 아니", "귀추가 주목", "밝은 미래", "빠르게 변화하는",
+    "새로운 패러다임", "중요한 시사점", "에 그치지 않고", "도움이 되셨기를", "도움이 되셨으면 좋겠습니다",
+    "물론입니다", "좋은 질문", "궁금한 점이 있으시면", "에 대해 알아보겠습니다", "더 자세한 내용이 필요하시면",
+    "최신 정보와 다를 수 있습니다", re.compile(r"새로운 지평을 열\w*"), re.compile(r"토대를 마련\w*"),
+    re.compile(r"위상을 드높\w*"), "패러다임의 전환",
+    "이러한 과제에도 불구하고", "밝은 전망이 기대", "4차 산업혁명 시대를 맞이하여", "에 박차를 가하고 있",
+    "앞으로의 행보가 기대", "향후 추이를 지켜볼 필요가 있다", "흥미진진한 여정", "아무도 말해주지 않는",
+    "아무도 알려주지 않는", "주목할 만한 점은", "라는 점에서 의미가 있습니다", "현대 사회에서 그 중요성이",
+    "정확하게 말하자면", re.compile(r"가능성이 큽니다\."),
+]
+KO_MILD = [
+    "결론적으로", "궁극적으로", "이를 통해", "더 나아가", "한편으로는", "요약하자면", "아울러", "이러한 맥락에서",
+    "이처럼", "이렇듯", "뿐만 아니라", "종합하면", "종합해 보면", "종합해보면", "요컨대",
+]
+KO_PATTERNS = [
+    ("double passive (되어지다, 보여지다)", re.compile(r"되어[지진질졌짐]|보여[지진질졌짐]")),
+    ("beyond merely (단순히 …를 넘어)", re.compile(r"단순히 .{0,12}[을를] 넘어")),
+    ("not merely (비단 … 뿐 아니라)", re.compile(r"비단 .{0,40}뿐(?:만)? 아니라")),
+    ("vague attribution (전문가들은…)", re.compile(r"전문가들은|업계 관계자에 따르면|관련 연구에 따르면")),
+    ("pivotal role (핵심적인 역할)", re.compile(r"(?:핵심적|중추적|획기적)인 역할")),
+    ("era opener (최근 들어 … 급격히 변화하고 있다)", re.compile(r"최근 들어 .{0,20}[이가] 급격히 변화하고 있다")),
+]
+
+TR_WORDS = re.compile(
+    r"\beşsiz\w*|\bbenzersiz\w*|\bpaha biçilmez\w*|\bzengin bir mozai\w*|\bçok ?boyutlu\w*|\bhayat[iî]\b")
+TR_PHRASES = [
+    re.compile(r"kritik bir rol oyna\w*"), re.compile(r"hayat[iî] bir önem taşı\w*"),
+    re.compile(r"önemli bir rol üstlen\w*"), re.compile(r"vazgeçilmez bir h[aâ]le gel\w*"),
+    "değil, aynı zamanda", re.compile(r"niteliğini de taşı\w*"), "boyutu göz ardı edilmemeli",
+    "değil, yalnızca", "değil, sadece", "değil, sırf", re.compile(r"bir soru ısrarla bekle\w*"),
+    "şu soru gündemde",
+]
+TR_MILD = [
+    "bu bağlamda", "öte yandan", "bunun yanı sıra", "bu doğrultuda", "bu çerçevede",
+    ("tam da", re.compile(r"\btam da\b")), "tam anlamıyla", ("gerçekten de", re.compile(r"\bgerçekten de\b")),
+    ("aslında da", re.compile(r"\baslında da\b")), ("esasen", re.compile(r"\besasen\b")),
+    ("nihayetinde", re.compile(r"\bnihayetinde\b")), ("bir bakıma", re.compile(r"\bbir bakıma\b")),
+    "gerçek anlamda", "sonuç olarak",
+]
+# The source's punctuation and grammar signals (semicolons, dashes, a comma before "ama", -mektedir,
+# a sentence opened by "ama" or "işte", "şudur:") all ran far above the line on human Turkish.
+TR_PATTERNS = []
+
+DE_WORDS = re.compile(
+    r"\bbeleucht(?!ung|er)\w*|\beintauch(?!ung)\w*|\bunterstreich(?!ung)\w*|\bspannend\w*|"
+    r"\bma(?:ß|ss)geblich\w*|\bnahtlos\w*|\bvielschichtig\w*|\bfacettenreich\w*|\bganzheitlich\w*|"
+    r"\bma(?:ß|ss)geschneidert\w*|\bdigitalen?\s+landschaft\w*|\bzusammenspiel\w*|\bentfessel\w*|"
+    r"\brevolutionier\w*|\bessen[zt]iell\w*|\bmeilenstein\w*|\bspannungsfeld\w*|\batemberaubend\w*|"
+    r"\bfaszinierend\w*|\bgame-?changer\b|\bzweifellos\b")
+DE_PHRASES = [
+    "steht als zeugnis für", "ist ein beweis für", "das ändert alles", "es ist wichtig zu bemerken",
+    "es kann nicht ignoriert werden", "keine diskussion wäre vollständig ohne", "es sollte hervorgehoben werden",
+    "es ist erwähnenswert", re.compile(r"es ist wichtig,? zu beachten"), "zu beachten ist, dass",
+    re.compile(r"branchenberichte (?:zeigen|belegen)"), "manche argumentieren", "mehrere studien deuten darauf hin",
+    "experten sind sich einig", "ich hoffe, das hilft", re.compile(r"(?:du hast|sie haben) völlig recht"),
+    "was für eine großartige frage", "lassen sie mich wissen", "ich helfe ihnen gerne", "lassen sie uns eintauchen",
+    "bis zu meinem letzten update", re.compile(r"als ki-(?:sprach)?modell"), "als ki kann ich nicht",
+    "das liegt außerhalb meiner fähigkeiten", "die eigentliche frage ist", "was wirklich zählt",
+    "worauf es wirklich ankommt", "letztlich geht es um", "lassen sie uns erkunden",
+    "hier ist, was sie wissen müssen", "ohne weitere umschweife", re.compile(r"tauchen wir .{0,20}ein\b"),
+    re.compile(r"ha(?:ben sie|st du) (?:dich |sich )?jemals gefragt"), "seit anbeginn der zivilisation",
+    "in einer zunehmend vernetzten welt", "im zeitalter der digitalisierung", "in der heutigen schnelllebigen",
+    "angesichts der rasanten entwicklung", "die möglichkeiten sind grenzenlos",
+    "an der schwelle zu einer neuen ära", "mit zuversicht in die zukunft", "das potenzial ist enorm",
+    "am ende des tages", "unterstreicht die bedeutung", re.compile(r"\bgute frage\b"),
+]
+DE_MILD = [
+    "darüber hinaus", ("zudem", re.compile(r"\bzudem\b")), ("ferner", re.compile(r"\bferner\b")),
+    "des weiteren", ("überdies", re.compile(r"\büberdies\b")), "zusammenfassend", "abschließend",
+    "im wesentlichen", ("fungiert als", re.compile(r"\bfungier\w* als\b")),
+    ("erweist sich als", re.compile(r"\berweis\w* sich als\b")), "in vielerlei hinsicht",
+    ("schauen wir uns … an", re.compile(r"schauen wir uns .{0,30}an\b")),
+]
+DE_PATTERNS = [
+    ("plays a key role (spielt eine wichtige Rolle)",
+     re.compile(r"\bspiel\w*\s+eine\s+(?:wichtige|entscheidende|zentrale|bedeutende)\s+rolle\b")),
+    ("dash punchline (es geht nicht um … – es geht um)",
+     re.compile(r"\bes\s+geht\s+nicht\s+um\b[^.!?]{1,60}\s[–—-]\s*es\s+geht\s+um\b")),
+    ("tacked-on significance (, was … unterstreicht)",
+     re.compile(r",\s*was\s+(?:[\wäöüß-]+\s+){0,6}(?:unterstreicht|verdeutlicht)\b")),
+    ("stacked hedge", re.compile(r"\b(?:scheint|könnte|dürfte)\s+(?:möglicherweise|eventuell|vielleicht|unter\s+umständen)\b")),
+    ("grand opener (in der heutigen … Welt)", re.compile(r"\bin\s+der\s+heutigen\s+\w+\s+(?:welt|gesellschaft)\b")),
+    ("calque (Potenzial freischalten, Veränderung umarmen)",
+     re.compile(r"\bpotenzial\w*\s+(?:zu\s+)?frei(?:zu)?schalt\w*|\bpotenzial\w*\s+freigeschaltet|\bveränderungen?\s+(?:zu\s+)?umarm\w*")),
+    ("vague attribution (Experten sagen)",
+     re.compile(r"\b(?:experten|studien|forscher|beobachter|kritiker)\s+(?:sagen|zeigen|meinen|betonen|erwarten|warnen)\b")),
+]
+
+RU_WORDS = re.compile(
+    r"\bбесшовн\w*|\bвызов(?:ы|ов|ами|ам|ах)\b|\bэкосистем\w*|\bинсайт\w*|\bуникальн\w*|\bнеотъемлем\w*|"
+    r"\bвпечатляющ\w*|\bинновационн\w*|\bсинерги\w*|"
+    r"\bпоистине\b|\bпо-настоящему\b")
+RU_PHRASES = [
+    "конечно! вот", "отличный вопрос", "надеюсь, это поможет", "надеюсь, было полезно",
+    re.compile(r"если хотите, (?:я )?могу"), re.compile(r"на момент моего (?:обучения|последнего обновления)"),
+    "стоит отметить", "следует отметить", "стоит подчеркнуть", "важно понимать", "давайте разберемся",
+    "в современном мире", "в эпоху цифровизации", "не секрет, что",
+    "в рамках данной статьи", "в этой статье мы", "ключевую роль", re.compile(r"нов(?:ый|ом|ого|ому) уров(?:ень|н\w*)"),
+    re.compile(r"безграничн\w+ возможност\w*"), re.compile(r"раскры\w+ (?:свой |ваш |весь )?потенциал"),
+    re.compile(r"комплексн\w+ подход"), "что свидетельствует о", "можно с уверенностью сказать", "рады сообщить",
+    re.compile(r"широк\w+ спектр"), "ряд преимуществ", "на ежедневной основе", re.compile(r"погруз(?:иться|имся) в"),
+    "подводя итог", "будущее уже здесь", "мало кто знает", "секрет прост",
+    "у каждого свой подход", "скажу честно",
+]
+RU_MILD = [
+    "кроме того", "более того", "помимо этого", "таким образом", "в заключение", "резюмируя", "иными словами",
+    "в конечном итоге", ("по сути", re.compile(r"\bпо сути\b")), "как известно", "в целях", "важно отметить",
+    "на сегодняшний день",
+]
+RU_PATTERNS = [
+    ("not about X, about Y (это не про)", re.compile(r"\bэто\s+не\s+про\b|\bречь\s+не\s+(?:о|об|про)\b")),
+    ("false contrast (не просто …, а)", re.compile(r"\bне\s+просто\b[^.!?\n]{0,80}?,\s*(?:а|это)\b")),
+    ("challenges then optimism (несмотря на … трудности)",
+     re.compile(r"\bнесмотря на\b[^.!?\n]{0,120}?(?:сталкива|вызов|трудност)")),
+    # "символизирует" and "неизгладимое впечатление" were in the source's pattern: both ordinary Russian.
+    ("inflated symbolism", re.compile(r"служит напоминанием|поворотн(?:ый|ым|ого) момент")),
+    ("tacked-on gerund", re.compile(r",\s+(?:подчеркивая|демонстрируя|отражая|свидетельствуя|способствуя|содействуя)\b")),
+    ("promotional place", re.compile(r"в самом сердце|может похвастаться|богат(?:ое|ым|ой)\s+(?:культурн\w+\s+)?наследи")),
+    ("vague attribution (эксперты отмечают)",
+     re.compile(r"(?:эксперты|специалисты)\s+(?:отмечают|считают|рекомендуют)|исследования\s+показывают|по\s+словам\s+экспертов")),
+    ("opens new possibilities", re.compile(r"открыва\w*\s+(?:перед\s+\w+\s+)?(?:новые|огромные)\s+(?:возможности|перспективы)")),
+    ("calque (адресовать проблему)", re.compile(r"адрес(?:овать|ует|уют|овал\w*)\s+(?:\w+\s+)?(?:проблем\w*|бол\w*)")),
+    ("stacked hedge", re.compile(r"\bмо(?:жет|гут)\s+потенциально\b")),
+    ("asks and answers (Почему …? Потому что)", re.compile(r"\b(?:почему|зачем)\b[^?\n]{0,60}\?\s+(?:потому что|чтобы)\b")),
+    ("teaser (Результат? …)", re.compile(r"\bрезультат\?\s")),
+]
+
+FI_WORDS = re.compile(
+    r"\bratkaisev\w*|\bolennai\w+|\belintärke\w+|\bkriitti\w+|\bainutlaatui\w+|"
+    r"\buraauurtav\w*|\bvallankumoukselli\w+|\binnovatiivi\w*|\bkäyttäjäystävälli\w*")
+FI_PHRASES = [
+    "vertaansa vailla", "olisin erittäin kiitollinen", "voisitte ystävällisesti", "harkita mahdollisuutta",
+    "haluaisin nöyrästi", "hyvä kysymys!", "erinomainen huomio!", "ehdottomasti!", "voitaneen todeta",
+    "lienee perusteltua", "saattaisi olla mahdollista", "on syytä huomata", "tässä yhteydessä on tärkeää",
+    "on huomattava, että", "tulevaisuus näyttää valoisalta", "asiantuntijoiden mukaan", "tutkimukset osoittavat",
+    "haasteista huolimatta", re.compile(r"viimeisimpien tietoj\w*"), "saatavilla olevien tietojen perusteella",
+    "on tärkeää huomioida se tosiasia", "se tosiasia, että", re.compile(r"\bme näemme, että"),
+    re.compile(r"\bme uskomme, että"), "muodostaa perustan", "monipuolisia mahdollisuuksia",
+]
+FI_MILD = [
+    "tämän lisäksi,", "tapaa, jolla", ("mikäli", re.compile(r"\bmikäli\b")), "voidaan todeta",
+    "kyse on kuitenkin siitä, että", "tässä yhteydessä", "edellä mainit", "kuten aiemmin mainit",
+]
+FI_PATTERNS = [
+    ("doubled significance (merkittävä ja keskeinen)",
+     re.compile(r"\b(?:merkittäv|keskei|tärke|olennai|ratkaisev|elintärke|kriitti)\w*\s+ja\s+"
+                r"(?:merkittäv|keskei|tärke|olennai|ratkaisev|elintärke|kriitti)\w*")),
+    ("stacked hedge", re.compile(r"\b(?:saattai\w*|saattaa|voisi\w*|voi(?:t|mme|tte|vat)?|ehkä(?:pä)?)\s+"
+                                 r"(?:\w+\s+){0,2}(?:mahdollisesti|potentiaalisesti)\b")),
+    ("opens new possibilities (avaa uusia mahdollisuuksia)",
+     re.compile(r"\bava(?:a|avat|ten|si|sivat)\s+uusia(?:,?\s+\w+)?\s+mahdollisuuksia\b")),
+    ("continues its development (jatkaa kehitystään)",
+     re.compile(r"\bjatka(?:a|vat|en|i|ivat)\s+(?:vahvaa\s+)?kehit(?:tymis|ys)tään\b")),
+    ("vague attribution (alan johtavat toimijat)", re.compile(r"\balan\s+johtav\w*\s+toimij\w+")),
+    ("English cleft (se on tämä X, joka)", re.compile(r"\bse on (?:juuri )?(?:tämä|tuo|se) \w+, joka\b")),
+]
+
 LANGS = {
     "en": {"name": "English", "words": STRONG_WORDS, "phrases": STRONG_PHRASES, "mild": MILD_PHRASES,
            "patterns": PATTERNS, "fillers": FILLERS, "contractions": CONTRACTIONS_EN,
@@ -215,6 +450,20 @@ LANGS = {
     "es": {"name": "Spanish", "words": ES_WORDS, "phrases": ES_PHRASES, "mild": ES_MILD,
            "patterns": ES_PATTERNS,
            "first_person": re.compile(r"\b(?:yo|me|mi|mis|mí|conmigo)\b", re.I)},
+    "ja": {"name": "Japanese", "words": JA_WORDS, "phrases": JA_PHRASES, "mild": JA_MILD,
+           "patterns": JA_PATTERNS, "fold": fold_lower},
+    "ko": {"name": "Korean", "words": KO_WORDS, "phrases": KO_PHRASES, "mild": KO_MILD,
+           "patterns": KO_PATTERNS, "fold": fold_lower},
+    "tr": {"name": "Turkish", "words": TR_WORDS, "phrases": TR_PHRASES, "mild": TR_MILD,
+           "patterns": TR_PATTERNS, "fold": fold_tr},
+    "de": {"name": "German", "words": DE_WORDS, "phrases": DE_PHRASES, "mild": DE_MILD,
+           "patterns": DE_PATTERNS, "fold": fold_lower,
+           "first_person": re.compile(r"\b(?:ich|mich|mir|mein|meine|meinen|meinem|meiner|meines)\b", re.I)},
+    "ru": {"name": "Russian", "words": RU_WORDS, "phrases": RU_PHRASES, "mild": RU_MILD,
+           "patterns": RU_PATTERNS, "fold": fold_ru,
+           "first_person": re.compile(r"\b(?:я|меня|мне|мной|мой|моя|моё|мое|мои|моего|моей|моих)\b", re.I)},
+    "fi": {"name": "Finnish", "words": FI_WORDS, "phrases": FI_PHRASES, "mild": FI_MILD,
+           "patterns": FI_PATTERNS, "fold": fold_lower},
 }
 
 LANG_NAMES = {
@@ -226,7 +475,7 @@ LANG_NAMES = {
     "pl": "Polish", "el": "Greek", "id": "Indonesian or Malay", "sv": "Swedish", "da": "Danish",
     "no": "Norwegian", "sw": "Swahili", "cs": "Czech", "ro": "Romanian", "hu": "Hungarian",
     "fi": "Finnish", "tl": "Tagalog", "ca": "Catalan", "hr": "Croatian, Bosnian or Serbian",
-    "af": "Afrikaans", "ms": "Malay",
+    "af": "Afrikaans", "ms": "Malay", "be": "Belarusian", "sr": "Serbian",
     "lt": "Lithuanian", "lv": "Latvian", "et": "Estonian", "sl": "Slovenian", "sk": "Slovak",
     "is": "Icelandic", "ga": "Irish", "cy": "Welsh", "eu": "Basque", "gl": "Galician", "sq": "Albanian",
     "mk": "Macedonian", "bg": "Bulgarian", "ka": "Georgian", "hy": "Armenian", "az": "Azerbaijani",
@@ -275,6 +524,31 @@ STOPWORDS = {
     "af": "die en van is in het dat nie op te vir met wat ek as was sy hy ook om",
 }
 STOPWORDS = {code: set(words.split()) for code, words in STOPWORDS.items()}
+
+# Cyrillic-script languages, told apart the same way (ё is read as е). Russian has the lists;
+# the others are here so that Ukrainian, Bulgarian and the rest are never given Russian lists.
+# Short words these languages share (в, и, на, за ...) swamp the difference in encyclopedic text,
+# so any word in two tables is dropped from both and only each language's own words are counted.
+CYRILLIC_STOPWORDS = {
+    "ru": "что это как он она его ее они был была были было году года также который которая которые "
+          "которых после при или их может между только еще уже чтобы когда если даже нет есть него этого "
+          "всех время является один одна свой своей во со же бы вот",
+    "uk": "що це як він вона його її вони був була були було році року також який яка які яких після "
+          "при або їх може між тільки ще вже щоб коли якщо навіть немає є та й із від до про всіх час "
+          "один одна свій своєї у",
+    "be": "што гэта як ён яна яго яе яны быў была былі было годзе года таксама які якая якія пасля пры "
+          "або іх можа паміж толькі яшчэ ўжо каб калі нават няма ёсць ад да пра ўсіх час адзін адна ў і",
+    "bg": "че това като той тя неговата беше които която който след през година също са ще може между "
+          "само още вече когато ако дори няма има от за е да се ли със във един една своя",
+    "sr": "да је се што за са од као али то су из сам ће био била који која које много још након током "
+          "године такође између само када ако чак нема има у",
+    "mk": "дека тоа како тој таа неговата беше кои која кој многу уште по за од се да ќе сум е со во "
+          "година исто така помеѓу само кога ако дури нема има",
+}
+_cyr = {code: set(words.split()) for code, words in CYRILLIC_STOPWORDS.items()}
+_shared = {w for c in _cyr for w in _cyr[c] if sum(w in t for t in _cyr.values()) > 1}
+CYRILLIC_STOPWORDS = {code: words - _shared for code, words in _cyr.items()}
+CYRILLIC_MIN_SHARE = 0.04   # measured below; see geodequill_Languages-0.6.5_MEASURED_11-7-26.md
 
 CHAR_LANGS = {"zh", "ja", "th", "lo", "km", "my", "bo"}
 
@@ -388,27 +662,64 @@ def script_shares(text, limit=200000):
     return [(s, n / total) for s, n in counts.most_common()] if total else []
 
 
-def latin_guess(text):
-    toks = [t.lower() for t in WORD.findall(text)]
-    shares = {code: sum(1 for t in toks if t in words) / len(toks) for code, words in STOPWORDS.items()} if toks else {}
+def latin_guess(text, table=None):
+    """Name the language from the share of each language's own common words. `table` is STOPWORDS
+    (Latin script) unless given; CYRILLIC_STOPWORDS is passed for Cyrillic text."""
+    table = table or STOPWORDS
+    # Cyrillic tables hold only each language's own words, so their shares run lower.
+    floor, listed = ((CYRILLIC_MIN_SHARE, CYRILLIC_MIN_SHARE) if table is CYRILLIC_STOPWORDS
+                     else (LATIN_MIN_SHARE, LATIN_MIN_LISTED))
+    toks = [t.lower().replace("ё", "е") for t in WORD.findall(text)]
+    shares = {code: sum(1 for t in toks if t in words) / len(toks) for code, words in table.items()} if toks else {}
     ranked = sorted(shares.items(), key=lambda kv: -kv[1])
     if len(toks) < 20 and (not ranked or ranked[0][1] == 0):
         return "en?", shares, len(toks)
     if len(ranked) < 2 or ranked[0][1] == 0:
         return None, shares, len(toks)
     (best, top), (runner, second) = ranked[0], ranked[1]
-    if len(toks) >= 20 and best in LANGS and top >= LATIN_MIN_SHARE and top >= second * LATIN_CLEAR_MARGIN:
+    if len(toks) >= 20 and best in LANGS and top >= floor and top >= second * LATIN_CLEAR_MARGIN:
         return best, shares, len(toks)
-    if len(toks) >= 20 and top >= (LATIN_MIN_LISTED if best in LANGS else LATIN_MIN_SHARE):
+    if len(toks) >= 20 and top >= (listed if best in LANGS else floor):
         if top >= second * LATIN_MARGIN:
             return best, shares, len(toks)
-        own = sum(1 for t in toks if t in STOPWORDS[best] and t not in STOPWORDS[runner])
-        theirs = sum(1 for t in toks if t in STOPWORDS[runner] and t not in STOPWORDS[best])
+        own = sum(1 for t in toks if t in table[best] and t not in table[runner])
+        theirs = sum(1 for t in toks if t in table[runner] and t not in table[best])
         if own >= 5 and own >= 3 * theirs:
             return best, shares, len(toks)
     if best == "en" and len(toks) < 20 and top >= second * LATIN_SHORT_MARGIN:
         return "en?", shares, len(toks)
     return None, shares, len(toks)
+
+
+# A language's own letters, for languages whose common words alone leave too much text unnamed.
+# (needs: letters at least `share` of all letters; none of: letters other neighbours use).
+# Russian: ы and э, which Ukrainian, Bulgarian, Serbian and Macedonian lack, and none of the
+# letters Belarusian (ў, і), Ukrainian (і ї є ґ), Serbian or Macedonian (ј љ њ џ ђ ћ ѓ ќ ѕ) or the
+# Cyrillic Turkic and Mongolic languages (ә ө ү ұ қ ғ ң һ җ) add.
+# Turkish: dotless ı or ğ, and no Azerbaijani ə or the ä å õ ß of the languages around Finnish.
+# Finnish: ä and ö, and none of Swedish å, Estonian õ, German ü and ß.
+# The last number is how many of the neighbours' letters are allowed per letter of the language's
+# own, so that a quoted name does not unname a text: Belarusian, Kazakh and Azerbaijani text run
+# well above one half; Estonian and Swedish text run at 0.4 to 0.55 against Finnish ä and ö.
+LETTER_HINTS = {
+    "ru": ("ыэ", "іїєґўјљњџђћѓќѕәөүұқғңһҗ", 0.005, 0.5,
+           "the letters ы and э, which only Russian among its neighbours uses"),
+    "tr": ("ığ", "əäåõß", 0.003, 0.5, "it has the Turkish letters ı and ğ"),
+    "fi": ("äö", "åõüß", 0.01, 0.15, "it has Finnish ä and ö and next to none of å, õ, ü or ß"),
+}
+
+
+def letter_hint(text, code):
+    """The reason `code` is read from its letters, or None. Needs 40 letters at least."""
+    want, refuse, share, allowed, why = LETTER_HINTS[code]
+    letters = [ch for ch in text.lower() if ch.isalpha()]
+    if len(letters) < 40:
+        return None
+    found = sum(1 for ch in letters if ch in want)
+    other = sum(1 for ch in letters if ch in refuse)
+    if found < share * len(letters) or other > allowed * found:
+        return None
+    return why
 
 
 LATIN_MIN_SHARE = 0.10
@@ -446,15 +757,36 @@ def resolve_language(text, requested=None):
         code, how = "lo", "read from the script: Lao"
     elif main == "TIBETAN":
         code, how = "bo", "read from the script: Tibetan"
+    elif main == "CYRILLIC":
+        guess, ls, ntok = latin_guess(text, CYRILLIC_STOPWORDS)
+        hint = letter_hint(text, "ru")
+        if guess == "ru" and not hint:
+            guess = None   # Russian is named only when its letters agree (see LETTER_HINTS)
+        if hint:
+            code, how = "ru", "Cyrillic script; " + hint
+        elif guess and guess != "en?":
+            pct = round(100 * ls[guess])
+            code, how = guess, f"Cyrillic script; {pct}% of words are common {LANG_NAMES[guess]} words"
+        else:
+            ranked = [c for c, v in sorted(ls.items(), key=lambda kv: -kv[1]) if v > 0][:2]
+            looks = " or ".join(LANG_NAMES[c] for c in ranked)
+            code, how = None, ("Cyrillic script; the language could not be told" +
+                               (f" (it looks most like {looks})" if looks else "") + " (use --lang to name it)")
     elif main == "LATIN":
         guess, ls, ntok = latin_guess(text)
         ranked = [c for c, v in sorted(ls.items(), key=lambda kv: -kv[1]) if v > 0][:2]
+        if guess in LETTER_HINTS and not letter_hint(text, guess):
+            guess = None   # its common words say so, but its letters do not (Estonian read as Finnish)
         if guess == "en?":
             code, how = "en", ("Latin script; too short to tell the language, so English is assumed "
                                "(use --lang to choose)")
         elif guess:
             pct = round(100 * ls[guess])
             code, how = guess, f"Latin script; {pct}% of words are common {LANG_NAMES[guess]} words"
+        elif ranked and ranked[0] in LETTER_HINTS and ntok >= 20 and letter_hint(text, ranked[0]):
+            # The common words lean one way but not clearly; that language's own letters settle it.
+            code = ranked[0]
+            how = (f"Latin script; its common words lean {LANG_NAMES[code]} and " + letter_hint(text, code))
         else:
             looks = " or ".join(LANG_NAMES[c] for c in ranked)
             code, how = None, ("Latin script; the language could not be told" +
@@ -476,7 +808,7 @@ def resolve_language(text, requested=None):
     return info
 
 
-IDENTIFIABLE = set(STOPWORDS) | {"zh", "ja", "ko", "th", "lo", "bo"}
+IDENTIFIABLE = set(STOPWORDS) | set(CYRILLIC_STOPWORDS) | {"zh", "ja", "ko", "th", "lo", "bo"}
 LANG_SCRIPT = {"ar": "arabic", "fa": "arabic", "ur": "arabic", "he": "hebrew", "hi": "devanagari",
                "mr": "devanagari", "ne": "devanagari", "bn": "bengali", "ru": "cyrillic", "uk": "cyrillic",
                "bg": "cyrillic", "mk": "cyrillic", "kk": "cyrillic", "mn": "cyrillic", "el": "greek",
@@ -607,27 +939,40 @@ def find_tells(raw, lang="en"):
         if in_code:
             continue
         src = line.translate(ZH_T2S) if lang == "zh" else line
-        low = src.lower()
+        fold = spec.get("fold") if spec else None
+        low = fold(src) if fold else src.lower()
+        # Languages with a fold match everything on the folded line; the fold keeps every
+        # character in place, so a match's position is also its position in the original line.
+        seen = low if fold else src
         spans = []
         for ph in (spec["phrases"] if spec else ()):
+            if isinstance(ph, re.Pattern):
+                for m in ph.finditer(low):
+                    spans.append((m.start(), m.end()))
+                    hits.append((no, "stock phrase", line[m.start():m.end()], line))
+                continue
             i = low.find(ph)
             while i != -1:
                 spans.append((i, i + len(ph)))
-                hits.append((no, "stock phrase", line[i:i + len(ph)] if lang == "zh" else ph, line))
+                hits.append((no, "stock phrase", line[i:i + len(ph)] if (lang == "zh" or fold) else ph, line))
                 i = low.find(ph, i + len(ph))
         if spec:
-            for m in spec["words"].finditer(src):
+            for m in spec["words"].finditer(seen):
                 if not any(a <= m.start() < b for a, b in spans):
                     hits.append((no, "stock word", line[m.start():m.end()], line))
         for ph in (spec["mild"] if spec else ()):
-            if ph in low:
+            if isinstance(ph, tuple):          # (label, regex) for a connector that needs word edges
+                n = len(ph[1].findall(low))
+                if n:
+                    mild[ph[0]] = mild.get(ph[0], 0) + n
+            elif ph in low:
                 mild[ph] = mild.get(ph, 0) + low.count(ph)
         if lang == "en":
             triples = len(re.findall(r"\b[A-Za-z-]+, [A-Za-z-]+,? (?:and|or) [A-Za-z-]+\b", line))
             if triples:
                 mild["three-item lists"] = mild.get("three-item lists", 0) + triples
         for label, rx in (spec["patterns"] if spec else []) + COMMON_PATTERNS:
-            for m in rx.finditer(src):
+            for m in rx.finditer(seen):
                 hits.append((no, label, line[m.start():m.end()].strip(), line))
         hm = re.match(r"\s*#{1,6}\s+(.*)$", line) if lang == "en" else None
         if hm:
@@ -680,7 +1025,8 @@ SPREAD_NEEDS = {"paragraph_cv": ("paragraphs", 3), "sentence_cv": ("sentences", 
 ISO3 = {"eng": "en", "spa": "es", "zho": "zh", "chi": "zh", "cmn": "zh", "yue": "zh", "jpn": "ja",
         "kor": "ko", "fra": "fr", "fre": "fr", "deu": "de", "ger": "de", "por": "pt", "ita": "it",
         "nld": "nl", "dut": "nl", "rus": "ru", "ukr": "uk", "ara": "ar", "hin": "hi", "vie": "vi",
-        "tur": "tr", "pol": "pl", "ind": "id", "tha": "th", "swe": "sv", "dan": "da", "nob": "no"}
+        "tur": "tr", "pol": "pl", "ind": "id", "tha": "th", "swe": "sv", "dan": "da", "nob": "no",
+        "fin": "fi", "bul": "bg", "bel": "be", "srp": "sr", "mkd": "mk"}
 
 
 def normalize_lang(value):
@@ -795,8 +1141,8 @@ def language_mismatch(raw, requested):
         return (f"Warning: --lang {requested} was given, but most of the text is written in "
                 f"{label}. If the draft should be in "
                 f"{LANG_NAMES.get(code, code)}, it is not.")
-    if main == "LATIN" and (not want or "LATIN" in want):
-        guess, ls, ntok = latin_guess(text)
+    if main in ("LATIN", "CYRILLIC") and (not want or main in want):
+        guess, ls, ntok = latin_guess(text, CYRILLIC_STOPWORDS if main == "CYRILLIC" else None)
         if (guess and guess not in ("en?", code) and ntok >= LANG_WARN_MIN_TOKENS
                 and ls.get(guess, 0) >= LANG_WARN_MIN_SHARE):
             pct = round(100 * ls[guess])
@@ -818,7 +1164,133 @@ def before_line(before, m, lang):
     return f"reading level: {was}, {now}"
 
 
-def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lang=None, before=None):
+TOKEN = re.compile(rf"{WORD.pattern}|[{CHAR_UNIT}]")
+
+
+def tokens(text):
+    return TOKEN.findall(prose_only(text or ""))
+
+
+def words_changed(before, after):
+    """How much of the original's wording a rewrite changed: (percent, original tokens, added).
+    A token is a word, or one character in scripts written without spaces. Matching is
+    difflib's longest-matching-blocks comparison, so moved or reworded stretches count as
+    changed and untouched ones as kept. Capitals are ignored: "lunch" to "Lunch" is not a new word."""
+    a, b = [t.lower() for t in tokens(before)], [t.lower() for t in tokens(after)]
+    if not a:
+        return None
+    kept = sum(blk.size for blk in difflib.SequenceMatcher(None, a, b, autojunk=False).get_matching_blocks())
+    return round(100 * (len(a) - kept) / len(a)), len(a), len(b) - kept
+
+
+def changed_line(before, raw):
+    got = words_changed(before, raw)
+    if not got:
+        return "wording changed: not measured (the original has no words)"
+    pct, total, added = got
+    return f"wording changed: {pct}% of the original's {total} words changed or cut, {added} added"
+
+
+NO_SPACE_SCRIPTS = {"HAN", "HIRAGANA", "KATAKANA", "THAI", "LAO", "TIBETAN", "KHMER", "MYANMAR"}
+
+
+def _edge(ch):
+    return ch.isalnum() and script_of(ch) not in NO_SPACE_SCRIPTS
+
+
+def keep_count(item, text):
+    """How many times item stands in text as itself: an item that starts or ends with a letter or
+    digit must not run on into another letter or digit of a spaced script ("Net 30" is not in
+    "Net 300"). Characters of scripts written without spaces always count as a boundary."""
+    n = 0
+    for m in re.finditer(re.escape(item), text):
+        a, b = m.start(), m.end()
+        if _edge(item[0]) and a > 0 and _edge(text[a - 1]):
+            continue
+        if _edge(item[-1]) and b < len(text) and _edge(text[b]):
+            continue
+        n += 1
+    return n
+
+
+def keep_variant(item, text):
+    """The text's spelling of a protected item written differently: other capitals, spaces or
+    hyphens added or dropped. None when there is no such spelling."""
+    chars = [c for c in item if not c.isspace() and c not in "-_"]
+    if len(chars) < 3:
+        return None
+    rx = re.compile(r"[\s\-_]?".join(re.escape(c) for c in chars), re.I)
+    for m in rx.finditer(norm(text)):
+        if m.group(0) != item:
+            return m.group(0)
+    return None
+
+
+def clean_keep(items):
+    out = []
+    for it in items or []:
+        it = norm(str(it)).strip()
+        it = re.sub(r"^[-*•]\s+", "", it).strip().strip('"').strip()
+        if it and not it.startswith("#") and it not in out:
+            out.append(it)
+    return out
+
+
+def keep_path():
+    return os.path.join(geodequill_home(), "keep.md")
+
+
+def saved_keep():
+    return clean_keep((read_text(keep_path()) or "").splitlines())
+
+
+def change_keep(add=(), remove=()):
+    """Add and remove saved protected words; returns the saved list."""
+    gone = set(clean_keep(remove))
+    items = [i for i in saved_keep() if i not in gone]
+    items += [i for i in clean_keep(add) if i not in items]
+    os.makedirs(geodequill_home(), exist_ok=True)
+    with open(keep_path(), "w", encoding="utf-8") as f:
+        f.write("# Protected words: GeodeQuill keeps these exactly as written\n\n"
+                + "".join(f"- {i}\n" for i in items))
+    return items
+
+
+def keep_report(raw, given=(), saved=(), before=None):
+    """Lines for the protected-words part of a report, and how many are missing or altered.
+    Items the user named for this text are always judged. Saved items are judged only against
+    an original (before), and only when the original holds them. An item is missing when it no
+    longer appears at all, and altered when it also appears spelled differently; fewer mentions
+    than the original is reported but not flagged, because a rewrite may say "it" the second time."""
+    text, old = norm(raw), norm(before) if before is not None else None
+    out, bad = [], 0
+    given = clean_keep(given)
+    for it in given + [x for x in clean_keep(saved) if x not in given]:
+        now = keep_count(it, text)
+        was = keep_count(it, old) if old is not None else None
+        if it not in given and not was:
+            continue
+        if was is None:
+            ok, counts = now > 0, ""
+        elif was == 0:
+            out.append(f'"{it}": not in the original' + (f"; {now} now" if now else ""))
+            continue
+        else:
+            ok, counts = now > 0, f" ({was} in the original, {now} now)"
+        alt = keep_variant(it, raw)
+        if ok and not alt:
+            out.append(f'"{it}": kept' + counts)
+            continue
+        bad += 1
+        if ok:
+            out.append(f'"{it}": ALTERED' + counts + f'; also written as "{alt}"')
+        else:
+            out.append(f'"{it}": MISSING' + counts + (f'; written as "{alt}" instead' if alt else ""))
+    return out, bad
+
+
+def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lang=None, before=None,
+                keep=(), saved=()):
     if not has_words(raw):
         return EMPTY_MESSAGE
     info = resolve_language(raw, lang)
@@ -877,7 +1349,11 @@ def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lan
             out.append(f"{k}: {m[k]}" + (f" ({reading_level(m[k])})" if k == "reading_lix" else ""))
     if before is not None:
         out.append(before_line(before, m, lang))
+        out.append(changed_line(before, raw))
     out.append("")
+    kept_lines, missing = keep_report(raw, keep, saved, before)
+    if kept_lines:
+        out += ["== Protected words =="] + kept_lines + [""]
     plang = profile_language(ptxt) if ptxt else None
     short = window_for(info["code"], info["unit"]) // 2
     off = []
@@ -921,13 +1397,14 @@ def scan_report(raw, ptxt=None, profile=None, register="written", tone=None, lan
     fmt = sum(1 for h in hits if h[1] in FORMAT_KINDS)
     out.append(f"Summary: {len(hits) - weak - fmt} strong tells, {weak} stock words and "
                f"{fmt} formatting marks (weak alone; real writers use them), {len(off)} habits off."
+               + (f" {missing} protected word{'s' if missing != 1 else ''} missing or altered." if missing else "")
                + ("" if info["lists"] else " Phrases and stock words were not checked for this language.")
                + (" English was assumed, not identified: if the text is not English, its phrases and stock "
                   "words were not checked." if info["lists"] and "assumed" in info["how"] else ""))
     return "\n".join(out)
 
 
-def cmd_scan(path, profile, register="written", tone=None, lang=None, before=None):
+def cmd_scan(path, profile, register="written", tone=None, lang=None, before=None, keep=()):
     raw = read_text(path)
     if raw is None:
         print(f"Cannot read {path}.")
@@ -942,7 +1419,7 @@ def cmd_scan(path, profile, register="written", tone=None, lang=None, before=Non
     for f in (path, before):
         if f in DECODE_NOTES:
             print("WARNING: " + DECODE_NOTES[f] + "\n")
-    report = scan_report(raw, ptxt, profile, register, tone, lang, old)
+    report = scan_report(raw, ptxt, profile, register, tone, lang, old, keep, saved_keep())
     print(report)
     return 1 if report == EMPTY_MESSAGE else 0
 
@@ -1053,6 +1530,282 @@ def cmd_stats(paths, each=False, targets=False, lang=None):
     if any(p in DECODE_NOTES for p in paths):
         result["warnings"] = [DECODE_NOTES[p] for p in paths if p in DECODE_NOTES]
     print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+# Learning from the user's own edited text.
+# A profile keeps ranges, not its samples, so new text is folded in with Welford's running mean
+# and variance (Welford 1962; the update form in Chan, Golub and LeVeque 1979). Each range is
+# first turned back into a centre and a spread the way it was built: suggest_targets pads the
+# 10th-90th percentile of the windows (10 or more) or their lowest-to-highest span (under 10),
+# so the padding is taken off and the span divided by the normal-distribution width of that
+# kind of span: 2.563 standard deviations for 10th-90th, the d2 constant of a sample of n
+# for lowest-to-highest (the control-chart table, e.g. Montgomery, Introduction to Statistical
+# Quality Control). After the new windows are added the range is rebuilt the same way and
+# padded with suggest_targets' own rule. Text near the voice's centre leaves a range about
+# where it was; text outside it moves the range toward it, by less the more samples the voice
+# already holds.
+D2 = {2: 1.128, 3: 1.693, 4: 2.059, 5: 2.326, 6: 2.534, 7: 2.704, 8: 2.847, 9: 2.970}
+Z90 = 2.563
+LEARN_MIN_CHANGED = 10     # percent of the draft's words the user must have changed
+LEARN_ASSUMED_WINDOWS = 3  # when the profile does not say how many samples built it
+
+
+def span_width(n):
+    return Z90 if n >= 10 else D2.get(max(n, 2), D2[2])
+
+
+def unpad(lo, hi, n):
+    """The unpadded range suggest_targets started from, before its padding and floors."""
+    pad = 0.0
+    for _ in range(30):
+        w, top = max(hi - lo - 2 * pad, 0.0), hi - pad
+        new = max(w * 0.1, abs(top) * 0.05, 0.05)
+        if n < 3:
+            new = max(new, abs(top) * 0.25)
+        if abs(new - pad) < 1e-9:
+            break
+        pad = new
+    return lo + pad, hi - pad
+
+
+def learn_range(key, lo, hi, n, values):
+    rlo, rhi = unpad(lo, hi, n)
+    if rhi < rlo:
+        rlo = rhi = (lo + hi) / 2
+    mean, sd = (rlo + rhi) / 2, (rhi - rlo) / span_width(n)
+    count, m2 = n, sd * sd * max(n - 1, 1)
+    for x in values:
+        count += 1
+        d = x - mean
+        mean += d / count
+        m2 += d * (x - mean)
+    half = math.sqrt(m2 / (count - 1)) * span_width(count) / 2
+    nlo, nhi = mean - half, mean + half
+    pad = max((nhi - nlo) * 0.1, abs(nhi) * 0.05, 0.05)
+    if count < 3:
+        pad = max(pad, abs(nhi) * 0.25)
+    new_lo, new_hi = round(max(nlo - pad, 0), 2), round(max(nhi + pad, HI_FLOOR.get(key, 0)), 2)
+    # A range stretches only toward text that fell outside it; inside text can only tighten it.
+    if min(values) >= lo:
+        new_lo = max(new_lo, lo)
+    if max(values) <= hi:
+        new_hi = min(new_hi, hi)
+    if new_hi < new_lo:
+        new_lo, new_hi = lo, hi
+    return [new_lo, new_hi], count
+
+
+def targets_json_block(ptxt):
+    for m in re.finditer(r"```json\s*(\{.*?\})\s*```", ptxt, re.S | re.I):
+        try:
+            data = json.loads(m.group(1))
+        except ValueError:
+            continue
+        if isinstance(data, dict) and any(isinstance(data.get(k), dict) for k in ("targets", "targets_spoken")):
+            return m, data
+    return None, None
+
+
+def _num(v):
+    return str(int(v)) if float(v).is_integer() else repr(round(float(v), 2))
+
+
+def format_targets(data):
+    parts = []
+    for k, v in data.items():
+        if isinstance(v, dict):
+            rows = ",\n".join(f"    {json.dumps(a)}: " + (f"[{_num(r[0])}, {_num(r[1])}]" if isinstance(r, list)
+                                                         and len(r) == 2 else json.dumps(r)) for a, r in v.items())
+            parts.append(f"  {json.dumps(k)}: {{\n{rows}\n  }}")
+        else:
+            parts.append(f"  {json.dumps(k)}: {json.dumps(v)}")
+    return "{\n" + ",\n".join(parts) + "\n}"
+
+
+def profile_windows(ptxt, data, key, lang, unit):
+    known = (data.get("windows") or {}).get(key) if isinstance(data.get("windows"), dict) else None
+    if isinstance(known, int) and known >= 1:
+        return known, None
+    reg = "spoken" if key == "targets_spoken" else "written"
+    line = re.search(r"^samples:(.*)$", ptxt, re.M | re.I)
+    line = line.group(1) if line else ""
+    part = re.search(rf"\b{reg}\b(.*?)(?:;|$)", line, re.I)
+    part = part.group(1) if part else (line if reg == "written" and "spoken" not in line.lower() else "")
+    size = window_for(lang, unit)
+    win = re.search(r"([\d,]+)\s+windows", part)
+    if win:
+        return max(int(win.group(1).replace(",", "")), 1), None
+    pc = re.search(r"(\d+)\s+(?:pieces?|books?|files?|samples?)", part) or re.match(r"\s*(\d+)\b(?!,\d)", part)
+    amount = re.search(r"about\s+([\d,]+)\s+(?:words|characters)", part)
+    if pc or amount:
+        got = max(int(pc.group(1)) if pc else 0,
+                  int(amount.group(1).replace(",", "")) // size if amount else 0, 1)
+        return got, None
+    return LEARN_ASSUMED_WINDOWS, (f"the voice does not say how many samples built it; "
+                                   f"{LEARN_ASSUMED_WINDOWS} were assumed")
+
+
+def add_source_line(ptxt, line):
+    m = re.search(r"^## Sources[ \t]*\n((?:[ \t]*-.*\n?|[ \t]*\n)*)", ptxt, re.M)
+    if m:
+        body = m.group(1).rstrip("\n \t")
+        start = m.start(1)
+        return ptxt[:start] + (body + "\n" if body else "") + line + "\n\n" + ptxt[start + len(m.group(1)):].lstrip("\n")
+    t = re.search(r"^## Targets", ptxt, re.M)
+    if t:
+        return ptxt[:t.start()] + "## Sources\n" + line + "\n\n" + ptxt[t.start():]
+    return ptxt.rstrip("\n") + "\n\n## Sources\n" + line + "\n"
+
+
+def learn_result(ptxt, texts, register="written", lang=None, draft=None, today=None):
+    """Fold the user's own edited text into a voice's ranges for one register. Returns
+    {"ok": bool, "lines": [...], "profile": new profile text or None}."""
+    key = "targets_spoken" if register == "spoken" else "targets"
+    fail = lambda *lines: {"ok": False, "lines": list(lines) + ["Nothing was learned; the voice is unchanged."],
+                           "profile": None}
+    block, data = targets_json_block(ptxt or "")
+    targets = parse_targets(ptxt or "", key)
+    if not block or not targets:
+        return fail(f"This voice has no {register} ranges to learn into. Set up its {register} habits first.")
+    texts = [t for t in texts if has_words(t)]
+    if not texts:
+        return fail("The edited text has no words.")
+    joined = "\n\n".join(texts)
+    info = resolve_language(joined, lang)
+    plang = profile_language(ptxt)
+    if not same_language(plang, info):
+        return fail(f"The edited text is {language_label(info['tag'])} and the voice was measured in "
+                    f"{language_label(plang)}. A voice learns only from text in its own language.")
+    if draft is not None:
+        got = words_changed(draft, joined)
+        if got and got[0] < LEARN_MIN_CHANGED:
+            return fail(f"Only {got[0]}% of the draft's words were changed, so this is still mostly the AI's "
+                        f"writing. A voice learns only from the user's own words; at least "
+                        f"{LEARN_MIN_CHANGED}% must differ.")
+    code, unit = info["code"], info["unit"]
+    size = window_for(code, unit)
+    floor = size * 3 // 10
+    ms = [m for m in (metrics(p, code, unit) for t in texts for p in pieces(t, size)) if m["words"] >= floor]
+    if not ms:
+        got = wc(prose_only(joined))
+        return fail(f"The edited text is {got} {unit} long; at least {floor} are needed to measure it. "
+                    f"Several edits can be learned together once they add up to that.")
+    n, assumed = profile_windows(ptxt, data, key, code, unit)
+    new_targets, lines, kept, skipped = {}, [], [], []
+    for k, (lo, hi) in targets.items():
+        need = SPREAD_NEEDS.get(k)
+        vals = [m[k] for m in ms if k in m and not (need and m.get(need[0], 0) < need[1])]
+        if not vals:
+            new_targets[k] = [lo, hi]
+            skipped.append(k)
+            continue
+        rng, _count = learn_range(k, lo, hi, n, vals)
+        new_targets[k] = rng
+        if rng == [lo, hi] or (abs(rng[0] - lo) < 0.005 and abs(rng[1] - hi) < 0.005):
+            new_targets[k] = [lo, hi]
+            kept.append(k)
+        else:
+            lines.append(f"{k}: {_num(lo)} to {_num(hi)} -> {_num(rng[0])} to {_num(rng[1])}")
+    count = n + len(ms)
+    words = sum(m["words"] for m in ms)
+    head = [f"Learned from {words} {unit} of the user's own edited text ({len(ms)} "
+            f"sample{'s' if len(ms) != 1 else ''}); the voice's {register} habits now rest on "
+            f"{count} samples."]
+    if assumed:
+        head.append(f"(Note: {assumed}.)")
+    out = head + (["Ranges that moved:"] + lines if lines else ["No range moved: the edit sits inside the voice's habits."])
+    if kept and lines:
+        out.append("Unchanged: " + ", ".join(kept) + ".")
+    if skipped:
+        out.append("Not learned (the edit is too short for these measures): " + ", ".join(skipped) + ".")
+    data = dict(data)
+    data[key] = new_targets
+    win = dict(data.get("windows") or {}) if isinstance(data.get("windows"), dict) else {}
+    win[key] = count
+    data["windows"] = win
+    newp = ptxt[:block.start(1)] + format_targets(data) + ptxt[block.end(1):]
+    day = today or __import__("datetime").date.today().isoformat()
+    newp = add_source_line(newp, f"- the user's own edited text, learned {day}, about {words} {unit} | "
+                                 f"{register} | own prose")
+    return {"ok": True, "lines": out, "profile": newp}
+
+
+def is_built_in(path):
+    return os.path.dirname(os.path.abspath(path)) == BUILT_IN_VOICES
+
+
+def cmd_learn(args, lang=None):
+    def take(flag):
+        nonlocal args
+        if flag not in args:
+            return None
+        i = args.index(flag)
+        val = args[i + 1] if i + 1 < len(args) else None
+        args = args[:i] + args[i + 2:]
+        return val
+    profile, draft_path = take("--profile"), take("--draft")
+    register = take("--register") or "written"
+    write = "--write" in args
+    files = [a for a in args if a != "--write"]
+    if not profile or not files or register not in ("written", "spoken") or any(f.startswith("--") for f in files):
+        print("Usage: learn EDITED [EDITED ...] --profile P.md|NAME [--register written|spoken] "
+              "[--draft DRAFT] [--lang CODE] [--write]")
+        return 2
+    path = profile if os.path.isfile(profile) else find_voice(profile)
+    if not path:
+        print(f"No voice found at or named {profile}.")
+        return 1
+    if is_built_in(path):
+        print("Built-in voices do not learn. Save a copy as a voice of your own and learn into that.")
+        return 3
+    ptxt = read_text(path)
+    texts, err = load_all(files)
+    if ptxt is None or err:
+        print(err or f"Cannot read {path}.")
+        return 1
+    draft = None
+    if draft_path:
+        draft = read_text(draft_path)
+        if draft is None:
+            print(f"Cannot read {draft_path}.")
+            return 1
+    res = learn_result(ptxt, texts, register, lang, draft)
+    if res["ok"] and write:
+        tmp = path + ".learning"
+        with open(tmp, "w", encoding="utf-8", newline="") as f:
+            f.write(res["profile"])
+        os.replace(tmp, path)
+        print(f"Saved {path}")
+    elif res["ok"]:
+        print("Not saved yet: add --write to save these changes.")
+    print("\n".join(res["lines"]))
+    return 0 if res["ok"] else 3
+
+
+def cmd_keep(args):
+    def grab(flag):
+        out, rest, i = [], [], 0
+        while i < len(args):
+            if args[i] == flag and i + 1 < len(args):
+                out.append(args[i + 1])
+                i += 2
+            else:
+                rest.append(args[i])
+                i += 1
+        return out, rest
+    adds, args = grab("--add")
+    removes, args = grab("--remove")
+    if args:
+        print("Usage: keep [--add WORDS ...] [--remove WORDS ...]")
+        return 2
+    items = change_keep(adds, removes) if adds or removes else saved_keep()
+    if not items:
+        print(f"No protected words saved. They are kept in {keep_path()}.")
+        return 0
+    print(f"Protected words ({keep_path()}):")
+    for i, it in enumerate(items, 1):
+        print(f"{i}. {it}")
     return 0
 
 
@@ -1318,7 +2071,9 @@ def main(argv):
         return cmd_tones(argv[2:])
     if len(argv) >= 2 and argv[1] == "languages":
         return cmd_languages()
-    if len(argv) < 3 or argv[1] not in ("stats", "scan", "habits"):
+    if len(argv) >= 2 and argv[1] == "keep":
+        return cmd_keep(argv[2:])
+    if len(argv) < 3 or argv[1] not in ("stats", "scan", "habits", "learn"):
         print(__doc__)
         return 2
     args = argv[2:]
@@ -1336,6 +2091,16 @@ def main(argv):
         return cmd_stats(files, each="--each" in flags, targets="--targets" in flags, lang=lang)
     if argv[1] == "habits":
         return cmd_habits(args, lang)
+    if argv[1] == "learn":
+        return cmd_learn(args, lang)
+    keep = []
+    while "--keep" in args:
+        i = args.index("--keep")
+        if i + 1 >= len(args) or not args[i + 1].strip():
+            print("--keep needs the word or phrase to keep")
+            return 2
+        keep.append(args[i + 1])
+        args = args[:i] + args[i + 2:]
     profile, register = None, "written"
     if "--profile" in args:
         i = args.index("--profile")
@@ -1364,7 +2129,7 @@ def main(argv):
     if not args:
         print(__doc__)
         return 2
-    return cmd_scan(args[0], profile, register, tone, lang, before)
+    return cmd_scan(args[0], profile, register, tone, lang, before, keep)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,8 @@ present the result as your own work, not as made or endorsed by GeodeForge. All 
 rights in the names and marks above are reserved.
 
 The built-in voices are named after the authors whose public-domain writing they were measured
-from: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. The names only
+from: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln, Oscar Wilde, Frederick Douglass,
+Louisa May Alcott, Will Rogers, Lu Xun and José Martí. The names only
 say whose style a voice follows. Text written in these voices is labelled "in the style of" the
 author, and nothing here claims any connection with, or endorsement by, the authors' estates or
 the owners of any trademark that uses their names.

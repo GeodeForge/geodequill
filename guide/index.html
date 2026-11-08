@@ -47,7 +47,10 @@
 <li><strong>"Write this in my voice:"</strong> followed by your notes.</li>
 <li><strong>"Make this sound like me:"</strong> followed by text you want rewritten. It keeps every fact and changes only the wording.</li>
 <li><strong>"Stay in my voice."</strong> Everything it writes for the rest of the chat uses your voice.</li>
+<li><strong>"Light edit"</strong>, <strong>"just polish"</strong> or <strong>"keep my wording":</strong> followed by your text. It fixes typos, grammar and machine-sounding phrases and leaves your sentences as you wrote them. No voice is needed for this.</li>
 </ul>
+<p><strong>Words it must never change.</strong> Tell it which words to keep exactly, such as product names or a set phrase: <strong>"keep 'Net 30' exactly"</strong>. Every rewrite keeps them as you wrote them. It offers to save them so you don't have to repeat them; to see the saved list, ask <strong>"what are my protected words?"</strong> If you ask for a check, the checker tells you if one went missing.</p>
+<p><strong>Teach it from your edits.</strong> When you change a draft to how you'd really say it, paste your version back and say <strong>"here's how I changed it, learn from that."</strong> Your voice is measured again with your edit added, and it tells you what moved. Only your own words count: if your version is still mostly its draft, it says so and changes nothing. A short edit may not be enough on its own; it can gather a few and learn them together.</p>
 <p>If a real example or number would make the piece better, it asks you for one instead of making it up.</p>
 <p>AI apps sometimes answer a short request themselves without opening GeodeQuill. Anthropic's own guide for people who write skills says Claude tends to skip a skill on a short, simple request, even when the request matches the skill's description exactly (the skill-creator guide at <a href="https://github.com/anthropics/skills" rel="noopener">github.com/anthropics/skills</a>). To make sure it's used, start with <strong>"Use GeodeQuill to…"</strong>, for example <strong>"Use GeodeQuill to write a thank-you note like Jane Austen."</strong></p>
 <p><strong>The note at the end.</strong> After each piece, GeodeQuill adds a short note: blanks you need to fill in, "in the style of" when the voice is a real person, and an offer to run its checker. The note is not part of your text: copy the text, not the note.</p>
@@ -62,27 +65,28 @@
 <li><strong>"Make it easier to read"</strong>, <strong>"simpler"</strong> or <strong>"less jargon"</strong> uses the plain tone: everyday words and shorter sentences, with every fact kept. If you ask for a check, GeodeQuill tells you the reading level before and after: very easy, easy, standard, hard or very hard.</li>
 </ul>
 <p>A tone changes how your voice speaks, not who is speaking. You can describe a tone of your own and ask GeodeQuill to save it.</p>
-<p>You can keep several voices: a work voice, a casual voice, a character. GeodeQuill also comes with five built-in voices of famous authors whose books are free of copyright: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Say <strong>"write this like Jane Austen"</strong>, or pick one from the list. You can build others the same way. Writing in a real person's voice is always labelled "in the style of" them.</p>
+<p>You can keep several voices: a work voice, a casual voice, a character. GeodeQuill also comes with ten built-in voices of famous writers whose work is free of copyright: Mark Twain, Jane Austen, Charles Dickens, Abraham Lincoln, Oscar Wilde, Frederick Douglass, Louisa May Alcott and Will Rogers in English, Lu Xun in Chinese and José Martí in Spanish. Say <strong>"write this like Jane Austen"</strong>, or pick one from the list. You can build others the same way. Writing in a real person's voice is always labelled "in the style of" them.</p>
 <h2>6. Where your voices are kept</h2>
-<p>On your computer, in a folder named <code>.geodequill</code> inside your home folder. Every AI app on that computer that has GeodeQuill installed can use the same voices.</p>
+<p>On your computer, in a folder named <code>.geodequill</code> inside your home folder. Every AI app on that computer that has GeodeQuill installed can use the same voices. Your protected words are kept there too.</p>
+<p>A voice is one small file, so you can hand it to a teammate and their GeodeQuill writes in it too. Send them the voice file; they add it to their own <code>.geodequill/voices</code> folder, or attach it in a chat.</p>
 <p><strong>In ChatGPT, in Claude on the web, and in phone apps,</strong> each chat starts fresh and can't keep files. At the end of setup, GeodeQuill gives you your voice as a file or as text. Save it, and attach or paste it at the start of any chat where you want your voice.</p>
 <h2>7. What it won't do</h2>
 <ul>
 <li>It won't promise to get past AI detectors. They guess, and they're often wrong.</li>
 <li>It's built not to invent memories, quotes, numbers or opinions and put them in your mouth. Read the draft before you send it: no check catches every invented detail.</li>
 <li>It won't use tricks like invisible characters or deliberate typos.</li>
-<li>It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.</li>
+<li>It won't check every language the same way. It writes in any language; if you don't say which, it writes in the language you asked in. It looks for machine-writing phrases in English, Chinese (simplified and traditional), Spanish, Japanese, Korean, Turkish, German, Russian and Finnish. In every language it checks punctuation, layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai, Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.</li>
 </ul>
 <h2>8. If something seems off</h2>
 <ul>
-<li><strong>It doesn't sound like you:</strong> give it more samples, especially casual ones, and say "update my voice".</li>
+<li><strong>It doesn't sound like you:</strong> give it more samples, especially casual ones, and say "update my voice". Or edit one of its drafts the way you'd write it, paste your version back, and say "learn from that".</li>
 <li><strong>It asks to set up a voice when you already have one:</strong> in ChatGPT, attach your saved voice file first. Elsewhere, say "list my voices" to check it's there.</li>
 <li><strong>It doesn't seem to be using GeodeQuill</strong> (no voice, no "in the style of" label, no note at the end): start the request with "Use GeodeQuill to…".</li>
 </ul>
 <h2>9. Tell us what's wrong</h2>
 <p>Found a fault, or a claim that doesn't hold up? Email <strong><a href="mailto:quill@geodeforge.com">quill@geodeforge.com</a></strong>. An example helps a lot, but leave it out if it's private. A person reads every message.</p>
 <p>GeodeQuill is free and open source under the MIT licence. The code is at <a href="https://github.com/GeodeForge/geodequill" rel="noopener">github.com/GeodeForge/geodequill</a>.</p>
-    <p class="meta">Version 0.6.4 · 6 November 2026</p>
+    <p class="meta">Version 0.6.5 · 7 November 2026</p>
   </section>
 
   <section class="morefrom">

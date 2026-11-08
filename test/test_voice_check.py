@@ -218,7 +218,8 @@ class Measuring(unittest.TestCase):
         self.assertTrue(all(v >= 2 * 10000 / d["words"] - 1 for v in d["common_words_per_10k"].values()))
 
 
-BUILT_IN = ["abraham-lincoln", "charles-dickens", "jane-austen", "mark-twain", "oscar-wilde"]
+BUILT_IN = ["abraham-lincoln", "charles-dickens", "frederick-douglass", "jane-austen", "jose-marti", "louisa-may-alcott",
+            "lu-xun", "mark-twain", "oscar-wilde", "will-rogers"]
 
 
 class Languages(unittest.TestCase):
@@ -267,12 +268,60 @@ class Languages(unittest.TestCase):
         self.assertEqual(summary(out)[0], 0)
 
     def test_a_language_without_lists_says_so_instead_of_a_clean_result(self):
-        for name, lang in (("ja.txt", "Japanese"), ("fr.txt", "French")):
-            _code, out = run("scan", fx(name))
+        # Japanese was the second example here until it got its own lists (0.6.5); Ukrainian
+        # (a UDHR preamble, see udhr-neighbours.json) took its place.
+        with open(fx("udhr-neighbours.json"), encoding="utf-8") as f:
+            uk = scratch(json.load(f)["uk"], suffix=".txt")
+        for path, lang in ((fx("fr.txt"), "French"), (uk, "Ukrainian")):
+            _code, out = run("scan", path)
             self.assertIn(f"Checked as: {lang}", out)
             self.assertIn("NOT checked", out)
             self.assertIn("Phrases and stock words were not checked for this language.", out)
             self.assertNotIn("\nnone found\n", out)
+
+    def test_six_more_languages_catch_machine_prose_and_pass_the_classics(self):
+        # <lang>-human.txt: public-domain writing, from the measured populations' sources:
+        # Akutagawa, 蜘蛛の糸 (1918, Aozora Bunko); Hyeon Jin-geon, 운수 좋은 날 (1924, Wikisource);
+        # Ömer Seyfettin, Kaşağı (1919, Wikisource); Kafka, Die Verwandlung (1915, Project Gutenberg
+        # 22367); Chekhov, Хамелеон (1884, Wikisource); Juhani Aho, Rautatie (1884, Project Gutenberg
+        # 10481). <lang>-machine.txt: imitations of machine prose written by the building session.
+        for lang, name in (("ja", "Japanese"), ("ko", "Korean"), ("tr", "Turkish"), ("de", "German"),
+                           ("ru", "Russian"), ("fi", "Finnish")):
+            _code, out = run("scan", fx(f"{lang}-machine.txt"))
+            self.assertIn(f"Checked as: {name}", out, lang)
+            self.assertIn(f"Machine-writing habit lists: {name}.", out, lang)
+            self.assertGreaterEqual(summary(out)[0], 8, lang)
+            _code, out = run("scan", fx(f"{lang}-human.txt"))
+            self.assertIn(f"Checked as: {name}", out, lang)
+            self.assertEqual(summary(out)[0], 0, lang)
+
+    def test_neighbour_languages_never_get_these_lists(self):
+        # UDHR preambles (OHCHR translations, udhr npm package 6.0.0). Ukrainian, Bulgarian,
+        # Belarusian, Serbian, Macedonian and Kazakh share the Cyrillic script with Russian; Estonian
+        # shares common words with Finnish; Azerbaijani shares letters and words with Turkish.
+        with open(fx("udhr-neighbours.json"), encoding="utf-8") as f:
+            texts = json.load(f)
+        for code in ("uk", "bg", "be", "sr", "mk", "kk", "et", "az"):
+            _code, out = run("scan", scratch(texts[code], suffix=".txt"))
+            self.assertIn("Phrases and stock words were not checked for this language.", out, code)
+        for code, name in (("ru", "Russian"), ("fi", "Finnish"), ("tr", "Turkish")):
+            _code, out = run("scan", scratch(texts[code], suffix=".txt"))
+            self.assertIn(f"Machine-writing habit lists: {name}.", out, code)
+
+    def test_turkish_capitals_and_russian_yo_are_read_as_typed(self):
+        # Turkish İ and I lower-case to i and ı; Russian ё is read as е. Before the fold, "İşte"
+        # style capitals missed their phrase and "разберёмся" missed "разберемся".
+        tr = "UZAKTAN ÇALIŞMA KRİTİK BİR ROL OYNAMAKTADIR. " * 3 + "Bu konuda pek çok görüş var ve tartışma sürüyor."
+        out = run("scan", scratch(tr, suffix=".txt"), "--lang", "tr")[1]
+        self.assertIn('stock phrase: "KRİTİK BİR ROL OYNAMAKTADIR"', out)
+        ru = "Давайте разберёмся, как это устроено. Мы долго спорили, но так ничего и не решили сегодня."
+        out = run("scan", scratch(ru, suffix=".txt"), "--lang", "ru")[1]
+        self.assertIn('stock phrase: "Давайте разберёмся"', out)
+
+    def test_russian_with_a_quoted_ukrainian_name_is_still_russian(self):
+        ru = ("Вчера я долго гулял по городу. Было холодно, но солнечно. Я зашёл в маленькое кафе "
+              "«Їжак», которое держит мой старый знакомый. Там пахло кофе и свежим хлебом.\n\n") * 2
+        self.assertIn("Checked as: Russian", run("scan", scratch(ru, suffix=".txt"))[1])
 
     def test_words_with_accents_and_vowel_signs_are_one_word_each(self):
         m = json.loads(run("stats", scratch("Việt Nam là một quốc gia.\n\nहिन्दी भाषा सुंदर है।", suffix=".txt"))[1])
@@ -328,6 +377,9 @@ class Languages(unittest.TestCase):
             _code, out = run("scan", scratch(text, suffix=".txt"))
             self.assertNotIn("Machine-writing habit lists: English", out, code)
             self.assertNotIn("Machine-writing habit lists: Spanish", out, code)
+            if code == "tr":   # Turkish has its own lists since 0.6.5
+                self.assertIn("Machine-writing habit lists: Turkish.", out)
+                continue
             self.assertIn("Phrases and stock words were not checked for this language.", out, code)
 
     def test_traditional_characters_get_the_chinese_lists(self):
@@ -356,13 +408,15 @@ class Languages(unittest.TestCase):
             self.assertNotIn("different language", out, line)
 
     def test_a_voice_in_an_unidentified_script_is_not_read_back_as_english(self):
-        ru = ("Вчера я долго гулял по городу. Было холодно, но солнечно. Я зашёл в маленькое кафе. "
-              "Там пахло кофе и свежим хлебом. Официантка улыбнулась и принесла меню.\n\n") * 3
-        m = json.loads(run("stats", scratch(ru, suffix=".txt"), "--targets")[1])
-        self.assertEqual(m["language"], "und-cyrillic")
+        # Georgian: a script the checker names no language for. Russian was the example here until
+        # Cyrillic text began to be told apart by its common words.
+        ka = ("გუშინ დიდხანს ვსეირნობდი ქალაქში. ცივოდა, მაგრამ მზიანი დღე იყო. პატარა კაფეში შევედი. "
+              "იქ ყავისა და ახალი პურის სუნი იდგა. ოფიციანტმა გაიღიმა და მენიუ მომიტანა.\n\n") * 3
+        m = json.loads(run("stats", scratch(ka, suffix=".txt"), "--targets")[1])
+        self.assertEqual(m["language"], "und-georgian")
         prof = scratch("language: " + m["language"] + "\n\n```json\n" +
                        json.dumps({"targets": m["suggested"]["targets"]}) + "\n```\n", suffix=".md")
-        _code, out = run("scan", scratch(ru, suffix=".txt"), "--profile", prof)
+        _code, out = run("scan", scratch(ka, suffix=".txt"), "--profile", prof)
         self.assertNotIn("different language", out)
 
     def test_a_voice_and_a_draft_in_the_same_unnamed_language_are_judged_as_one(self):
@@ -566,10 +620,15 @@ class Voices(unittest.TestCase):
             targets = json.loads(re.search(r"```json\n(.*?)\n```", text, re.S).group(1))
             spoken = "## Spoken habits" in text
             self.assertEqual(sorted(targets), ["targets"] + (["targets_spoken"] if spoken else []))
+            latin = not re.search(r"(?m)^language: (zh|ja|ko|th)$", text)  # reading level is Latin-script only
             for ranges in targets.values():
                 for lo, hi in ranges.values():
                     self.assertLessEqual(lo, hi)
-                self.assertIn("reading_lix", ranges, name)
+                if latin:
+                    self.assertIn("reading_lix", ranges, name)
+                else:
+                    self.assertNotIn("reading_lix", ranges, name)
+                    self.assertIn("no reading range", text, name)
             phrases = re.findall(r'(?m)^  - (written|spoken): "(.+)"$', text)
             for register in ("written", "spoken") if spoken else ("written",):
                 mine = [p for r, p in phrases if r == register]
@@ -746,6 +805,261 @@ class ReadingLevel(unittest.TestCase):
         text = open(os.path.join(SKILL, "references", "profile-template.md"), encoding="utf-8").read()
         self.assertIn('"reading_lix"', text)
         self.assertIn("Reading level:", text)
+
+
+class LearnFromEdits(unittest.TestCase):
+    """0.6.5: the user hands back their own edited version of a draft and the voice takes it as one
+    more sample. A profile keeps ranges, not samples, so each range is turned back into a centre and
+    a spread the way suggest_targets built it, the new windows are added with Welford's running
+    mean and variance, and the range is rebuilt the same way. Only the user's words may teach the
+    voice: text that is still mostly the AI's draft is refused."""
+
+    def setUp(self):
+        self.home = tempfile.mkdtemp()
+        self.env = {"GEODEQUILL_HOME": self.home}
+        base = open(fx("twain-corpus-profile.md"), encoding="utf-8").read()
+        self.big = os.path.join(self.home, "big.md")
+        open(self.big, "w", encoding="utf-8").write(base)
+        self.small = os.path.join(self.home, "small.md")
+        open(self.small, "w", encoding="utf-8").write(
+            re.sub(r"(?m)^samples:.*$", "samples: written 3 pieces, about 900 words", base))
+
+    def tearDown(self):
+        shutil.rmtree(self.home)
+
+    def ranges(self, path, key="targets"):
+        return load_checker().parse_targets(open(path, encoding="utf-8").read(), key)
+
+    def test_text_like_the_voice_barely_moves_a_voice_built_on_many_samples(self):
+        before = self.ranges(self.big)
+        code, out = run("learn", fx("twain-piece-1.txt"), fx("twain-piece-2.txt"), "--profile", self.big,
+                        "--write", env=self.env)
+        self.assertEqual(code, 0, out)
+        self.assertIn("now rest on 976 samples", out)
+        after = self.ranges(self.big)
+        for k in before:
+            self.assertLess(abs(after[k][0] - before[k][0]), 0.1, k)
+            self.assertLess(abs(after[k][1] - before[k][1]), 0.1, k)
+
+    def test_text_far_from_a_small_voice_pulls_the_range_toward_it(self):
+        vc = load_checker()
+        casual = open(fx("casual-edit.txt"), encoding="utf-8").read()
+        rate = vc.metrics(casual)["contractions_per_100w"]
+        before = self.ranges(self.small)["contractions_per_100w"]
+        self.assertGreater(rate, before[1])
+        code, out = run("learn", fx("casual-edit.txt"), "--profile", self.small, "--write", env=self.env)
+        self.assertEqual(code, 0, out)
+        after = self.ranges(self.small)["contractions_per_100w"]
+        self.assertGreater(after[1], before[1] + 3)
+        self.assertEqual(after[0], before[0])
+        self.assertRegex(out, r"contractions_per_100w: 0 to 1\.31 -> 0 to [\d.]+")
+
+    def test_a_range_stretches_only_toward_text_that_fell_outside_it(self):
+        _code, _out = run("learn", fx("casual-edit.txt"), "--profile", self.small, "--write", env=self.env)
+        self.assertEqual(self.ranges(self.small)["bullet_line_share"], [0, 0.05])
+
+    def test_the_math_follows_the_running_mean_and_variance(self):
+        vc = load_checker()
+        # A range built from 10 or more windows is a padded 10th-90th percentile: 2.563 standard deviations.
+        rng, n = vc.learn_range("avg_sentence_words", 10.0, 22.0, 20, [16.0])
+        rlo, rhi = vc.unpad(10.0, 22.0, 20)
+        mean, sd = (rlo + rhi) / 2, (rhi - rlo) / 2.563
+        self.assertEqual(n, 21)
+        self.assertAlmostEqual((rng[0] + rng[1]) / 2, mean, places=1)
+        # The value sat at the centre: the spread can only shrink, by the n-1 to n step.
+        self.assertLessEqual(rng[1] - rng[0], 12.0)
+        self.assertGreater(rng[1] - rng[0], 12.0 * 0.95)
+        # Padding is taken off exactly as suggest_targets put it on.
+        lo, hi = 3.0, 9.0
+        pad = max((hi - lo) * 0.1, hi * 0.05, 0.05)
+        self.assertEqual([round(x, 6) for x in vc.unpad(lo - pad, hi + pad, 12)], [lo, hi])
+
+    def test_a_voice_on_one_sample_is_padded_like_setup_pads_two(self):
+        vc = load_checker()
+        a, b = vc.metrics(open(fx("twain-piece-1.txt"), encoding="utf-8").read()), \
+            vc.metrics(open(fx("casual-edit.txt"), encoding="utf-8").read())
+        one = vc.suggest_targets([open(fx("twain-piece-1.txt"), encoding="utf-8").read()])
+        both = vc.suggest_targets([open(fx("twain-piece-1.txt"), encoding="utf-8").read(),
+                                   open(fx("casual-edit.txt"), encoding="utf-8").read()])["targets"]
+        lo, hi = one["targets"]["avg_sentence_words"]
+        rng, n = vc.learn_range("avg_sentence_words", lo, hi, one["based_on_pieces"], [b["avg_sentence_words"]])
+        self.assertEqual(n, 2)
+        self.assertLessEqual(rng[0], min(a["avg_sentence_words"], b["avg_sentence_words"]))
+        self.assertGreaterEqual(rng[1], max(a["avg_sentence_words"], b["avg_sentence_words"]))
+        self.assertLess(abs(rng[1] - both["avg_sentence_words"][1]), 0.25 * both["avg_sentence_words"][1])
+
+    def test_text_that_is_mostly_the_draft_is_refused(self):
+        was = open(self.small, encoding="utf-8").read()
+        tweak = open(fx("casual-edit.txt"), encoding="utf-8").read().replace("Okay, so", "So")
+        code, out = run("learn", scratch(tweak), "--draft", fx("casual-edit.txt"), "--profile", self.small,
+                        "--write", env=self.env)
+        self.assertEqual(code, 3)
+        self.assertIn("still mostly the AI's writing", out)
+        self.assertIn("Nothing was learned", out)
+        self.assertEqual(open(self.small, encoding="utf-8").read(), was)
+
+    def test_short_text_another_language_and_built_in_voices_are_refused(self):
+        code, out = run("learn", fx("human.txt"), "--profile", self.small, env=self.env)
+        self.assertEqual(code, 3)
+        self.assertIn("at least 150 are needed", out)
+        code, out = run("learn", fx("zh-human.txt"), "--profile", self.small, env=self.env)
+        self.assertEqual(code, 3)
+        self.assertIn("learns only from text in its own language", out)
+        code, out = run("learn", fx("casual-edit.txt"), "--profile", "mark-twain", "--write", env=self.env)
+        self.assertEqual(code, 3)
+        self.assertIn("Built-in voices do not learn", out)
+        code, _out = run("learn", fx("casual-edit.txt"), env=self.env)
+        self.assertEqual(code, 2)
+
+    def test_without_write_nothing_is_saved(self):
+        was = open(self.small, encoding="utf-8").read()
+        code, out = run("learn", fx("casual-edit.txt"), "--profile", self.small, env=self.env)
+        self.assertEqual(code, 0)
+        self.assertIn("Not saved yet", out)
+        self.assertEqual(open(self.small, encoding="utf-8").read(), was)
+
+    def test_saving_changes_only_the_ranges_their_count_and_one_source_line(self):
+        was = open(self.small, encoding="utf-8").read()
+        run("learn", fx("casual-edit.txt"), "--profile", self.small, "--write", env=self.env)
+        now = open(self.small, encoding="utf-8").read()
+        strip = lambda t: re.sub(r"```json.*?```", "", re.sub(r"(?m)^- the user's own edited text.*\n|^## Sources\n", "", t), flags=re.S)
+        self.assertEqual(strip(now).replace("\n", ""), strip(was).replace("\n", ""))
+        self.assertRegex(now, r"(?m)^- the user's own edited text, learned \d{4}-\d\d-\d\d, about 185 words \| written \| own prose$")
+        self.assertIn('"windows": {\n    "targets": 4\n  }', now)
+        self.assertNotIn("printer", now)  # none of the user's words are copied in
+        code, out = run("learn", fx("casual-edit.txt"), "--profile", self.small, env=self.env)
+        self.assertIn("now rest on 5 samples", out)
+        code, out = run("scan", fx("casual-edit.txt"), "--profile", self.small, env=self.env)
+        self.assertIn("== Versus the voice profile (written) ==", out)
+
+    def test_the_spoken_register_learns_into_its_own_ranges(self):
+        prof = os.path.join(self.home, "both.md")
+        shutil.copy(fx("profile-registers.md"), prof)
+        written = self.ranges(prof)
+        code, out = run("learn", fx("casual-edit.txt"), "--profile", prof, "--register", "spoken", "--write",
+                        env=self.env)
+        self.assertEqual(code, 0, out)
+        self.assertIn("assumed", out)
+        self.assertEqual(self.ranges(prof), written)
+        self.assertIn("the voice's spoken habits", out)
+
+    def test_the_sample_count_is_read_from_every_kind_of_samples_line(self):
+        vc = load_checker()
+        cases = {"samples: written 3, about 1,278 words; spoken 2, about 887 words": (3, 2),
+                 "samples: written 3 pieces, about 900 words": (3, None),
+                 "samples: 5 books, about 575,000 words, measured in 974 windows of about 500 words": (974, None),
+                 "samples: written 1 book and 1 essay, about 71,000 words; spoken 3 lectures, about 18,000 words": (142, 36)}
+        for line, (w, sp) in cases.items():
+            text = "---\n" + line + "\n---\n"
+            self.assertEqual(vc.profile_windows(text, {}, "targets", "en", "words"), (w, None), line)
+            got = vc.profile_windows(text, {}, "targets_spoken", "en", "words")
+            self.assertEqual(got[0], sp or 3, line)
+            self.assertEqual(got[1] is None, sp is not None, line)
+        self.assertEqual(vc.profile_windows("", {"windows": {"targets": 7}}, "targets", "en", "words"), (7, None))
+
+    def test_a_voice_made_in_setup_records_how_many_samples_built_it(self):
+        out = json.loads(run("stats", fx("twain-piece-1.txt"), fx("twain-piece-2.txt"), "--targets", env=self.env)[1])
+        self.assertEqual(out["suggested"]["based_on_pieces"], 2)
+        with open(os.path.join(SKILL, "references", "profile-template.md"), encoding="utf-8") as f:
+            self.assertIn('"windows": {', f.read())
+        with open(os.path.join(REPO, "voice", "voice.js"), encoding="utf-8") as f:
+            self.assertIn("targets.windows = { targets: w.stats.suggested.based_on_pieces }", f.read())
+
+
+class LightEdit(unittest.TestCase):
+    """0.6.5: a tidy fixes mistakes and machine phrases and keeps the user's sentences. With
+    --before, the report says how much of the original's wording changed, so a tidy that
+    rewrote too much shows."""
+
+    def test_the_report_says_how_much_wording_changed(self):
+        orig = scratch("We moved the meeting to Tuesday. It's important to note that lunch is provided.\n")
+        tidy = scratch("We moved the meeting to Tuesday. Lunch is provided.\n")
+        _code, out = run("scan", tidy, "--before", orig)
+        self.assertRegex(out, r"(?m)^wording changed: 36% of the original's 14 words changed or cut, 0 added$")
+        _code, out = run("scan", orig, "--before", orig)
+        self.assertIn("wording changed: 0% of the original's 14 words changed or cut, 0 added", out)
+
+    def test_characters_are_counted_where_there_are_no_spaces(self):
+        _code, out = run("scan", scratch("我们明天开会。\n"), "--before", scratch("我们今天开会。\n"))
+        self.assertIn("wording changed: 17% of the original's 6 words changed or cut, 1 added", out)
+
+    def test_the_skill_routes_light_edits_to_the_tidy(self):
+        with open(os.path.join(SKILL, "SKILL.md"), encoding="utf-8") as f:
+            main = f.read()
+        with open(os.path.join(SKILL, "references", "write.md"), encoding="utf-8") as f:
+            write = f.read()
+        for words in ('"light edit"', '"just polish"', '"keep my wording"'):
+            self.assertIn(words, main.split("---")[1])
+        self.assertIn("A tidy needs no voice", main)
+        self.assertIn("## Tidy", write)
+
+
+class ProtectedWords(unittest.TestCase):
+    """0.6.5: words the user says never to change. The checker reports any that went missing or
+    were written differently; saved ones are judged only against an original that held them."""
+
+    def setUp(self):
+        self.home = tempfile.mkdtemp()
+        self.env = {"GEODEQUILL_HOME": self.home}
+
+    def tearDown(self):
+        shutil.rmtree(self.home)
+
+    def test_the_saved_list_is_kept_beside_the_voices(self):
+        code, out = run("keep", env=self.env)
+        self.assertIn("No protected words saved", out)
+        run("keep", "--add", "GeodeQuill", "--add", "Net 30", "--add", "GeodeQuill", env=self.env)
+        run("keep", "--remove", "Net 30", "--add", "- Tuesday club", env=self.env)
+        code, out = run("keep", env=self.env)
+        self.assertEqual(code, 0)
+        self.assertIn(os.path.join(self.home, "keep.md"), out)
+        self.assertRegex(out, r"1\. GeodeQuill\n2\. Tuesday club\n?$")
+        self.assertEqual(run("keep", "--odd", env=self.env)[0], 2)
+
+    def test_a_missing_or_respelled_word_is_reported(self):
+        orig = scratch("Our GeodeQuill plugin ships on Net 30 terms. GeodeQuill is free.\n")
+        bad = scratch("Our Geode Quill plugin ships on 30-day terms. It is free.\n")
+        code, out = run("scan", bad, "--before", orig, "--keep", "GeodeQuill", "--keep", "Net 30", env=self.env)
+        self.assertIn('"GeodeQuill": MISSING (2 in the original, 0 now); written as "Geode Quill" instead', out)
+        self.assertIn('"Net 30": MISSING (1 in the original, 0 now)', out)
+        self.assertIn("2 protected words missing or altered.", out)
+        summary(out)
+        good = scratch("Our GeodeQuill plugin ships on Net 30 terms, and GeodeQuill is free.\n")
+        _code, out = run("scan", good, "--before", orig, "--keep", "GeodeQuill", env=self.env)
+        self.assertIn('"GeodeQuill": kept (2 in the original, 2 now)', out)
+        self.assertNotIn("missing or altered", out)
+        once = scratch("Our GeodeQuill plugin ships on Net 30 terms, and it is free.\n")
+        _code, out = run("scan", once, "--before", orig, "--keep", "GeodeQuill", env=self.env)
+        self.assertIn('"GeodeQuill": kept (2 in the original, 1 now)', out)
+        self.assertNotIn("missing or altered", out)
+        mixed = scratch("Our GeodeQuill plugin ships on Net 30 terms, and Geodequill is free.\n")
+        _code, out = run("scan", mixed, "--before", orig, "--keep", "GeodeQuill", env=self.env)
+        self.assertIn('"GeodeQuill": ALTERED (2 in the original, 1 now); also written as "Geodequill"', out)
+        self.assertIn("1 protected word missing or altered.", out)
+
+    def test_saved_words_are_judged_only_against_an_original_that_held_them(self):
+        run("keep", "--add", "Net 30", "--add", "Tuesday club", env=self.env)
+        text = scratch("Payment is due in thirty days.\n")
+        _code, out = run("scan", text, env=self.env)
+        self.assertNotIn("Protected words", out)
+        _code, out = run("scan", text, "--before", scratch("Payment terms are Net 30.\n"), env=self.env)
+        self.assertIn('"Net 30": MISSING', out)
+        self.assertNotIn("Tuesday club", out)
+
+    def test_a_word_inside_a_longer_word_does_not_count_but_one_beside_chinese_does(self):
+        _code, out = run("scan", scratch("Terms are Net 300 days.\n"), "--keep", "Net 30", env=self.env)
+        self.assertIn('"Net 30": MISSING', out)
+        _code, out = run("scan", scratch("我们的产品叫GeodeQuill，使用极光笔品牌。\n"), "--keep", "GeodeQuill",
+                         "--keep", "极光笔", env=self.env)
+        self.assertIn('"GeodeQuill": kept', out)
+        self.assertIn('"极光笔": kept', out)
+        self.assertEqual(run("scan", scratch("x y z.\n"), "--keep", env=self.env)[0], 2)
+
+    def test_the_skill_keeps_them_in_every_job(self):
+        with open(os.path.join(SKILL, "SKILL.md"), encoding="utf-8") as f:
+            main = f.read()
+        self.assertIn("**Protected words stay exactly as written.**", main)
+        self.assertIn("the plain tone included", main)
 
 
 class VoiceNames(unittest.TestCase):
@@ -1033,17 +1347,27 @@ class Connector(unittest.TestCase):
                     bad_tone = text(await call("save_tone", {"name": "odd", "summary": "x", "moves": "volume up"}))
                     toned = text(await call("check_draft", {"text": machine, "voice": "twain", "tone": "board-letter"}))
                     main = text(await call("get_instructions", {"part": "main"}))
+                    learned = text(await call("learn_voice", {"voice": "twain", "edited": open(fx("casual-edit.txt"), encoding="utf-8").read()}))
+                    refused = text(await call("learn_voice", {"voice": "Jane Austen", "edited": machine}))
+                    keep = json.loads(text(await call("protected_words", {"add": ["GeodeQuill", "Net 30"]})))
+                    kept = text(await call("check_draft", {"text": "Our Geode Quill plugin.", "before": "Our GeodeQuill plugin.", "keep": ["plugin"]}))
                     prompts = [p.name for p in (await s.list_prompts()).prompts]
                     return (tools, empty, saved, again, listed, read, checked, against, measured, main, prompts,
-                            tones, saved_tone, bad_tone, toned, by_name, plainer)
+                            tones, saved_tone, bad_tone, toned, by_name, plainer, learned, refused, keep, kept)
 
         try:
             (tools, empty, saved, again, listed, read, checked, against, measured, main, prompts,
-             tones, saved_tone, bad_tone, toned, by_name, plainer) = asyncio.run(drive())
+             tones, saved_tone, bad_tone, toned, by_name, plainer, learned, refused, keep, kept) = asyncio.run(drive())
         finally:
             shutil.rmtree(home)
-        self.assertEqual(tools, ["check_draft", "get_instructions", "list_tones", "list_voices",
-                                 "measure_samples", "read_voice", "save_tone", "save_voice"])
+        self.assertEqual(tools, ["check_draft", "get_instructions", "learn_voice", "list_tones", "list_voices",
+                                 "measure_samples", "protected_words", "read_voice", "save_tone", "save_voice"])
+        self.assertIn("Saved", learned)
+        self.assertIn("Learned from 185 words", learned)
+        self.assertIn("Built-in voices do not learn", refused)
+        self.assertEqual(keep["protected"], ["GeodeQuill", "Net 30"])
+        self.assertIn('"GeodeQuill": MISSING (1 in the original, 0 now); written as "Geode Quill" instead', kept)
+        self.assertIn('"plugin": kept', kept)
         self.assertEqual(len(tones), 13)
         self.assertIn("Saved", saved_tone)
         self.assertIn("not understood", bad_tone)

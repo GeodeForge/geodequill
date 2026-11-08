@@ -5,8 +5,13 @@ things you wrote yourself, keeps your voices and tones to pick from, and writes 
 text in them. It runs inside the AI app you already use: Claude, ChatGPT (on plans with skills), Codex,
 Copilot, Gemini CLI, Cursor and others that read skills.
 
-It also comes with five built-in voices measured from public-domain works: Mark Twain, Jane
-Austen, Charles Dickens, Abraham Lincoln and Oscar Wilde. Each profile lists its sources, in
+It can also learn from your own edits to its drafts, polish your text without rewriting it ("light
+edit", "keep my wording"), and keep words you name exactly as written, such as product names.
+A voice is one small file, so you can hand it to a teammate and their GeodeQuill writes in it too.
+
+It also comes with ten built-in voices measured from public-domain works: Mark Twain, Jane
+Austen, Charles Dickens, Abraham Lincoln, Oscar Wilde, Frederick Douglass, Louisa May Alcott,
+Will Rogers, Lu Xun (in Chinese) and José Martí (in Spanish). Each profile lists its sources, in
 `plugin/skills/geodequill/voices/`.
 
 A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
@@ -21,7 +26,8 @@ A [GeodeForge](https://geodeforge.com) tool. Downloads and install steps:
 - Invent memories, quotes, numbers or opinions and put them in your mouth.
 - Use tricks such as invisible characters or planted typos.
 - Check every language the same way. It writes in any language. It looks for machine-writing phrases in
-  English, Chinese (simplified and traditional) and Spanish. In every language it checks punctuation,
+  English, Chinese (simplified and traditional), Spanish, Japanese, Korean, Turkish, German, Russian and
+  Finnish. In every language it checks punctuation,
   layout and paragraph rhythm, and sentence rhythm wherever the writing marks where sentences end (Thai,
   Lao and Tibetan don't). For a language with no phrase list, its report says when the phrase check
   didn't run. Reading level is measured only for writing in the Latin alphabet, such as English or Spanish.

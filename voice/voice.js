@@ -279,7 +279,7 @@ function contractions(per100) {
 }
 
 function targetsBlock(t) {
-	const reg = (obj) => Object.entries(obj).map(([k, v]) => "    " + JSON.stringify(k) + ": [" + v.join(", ") + "]").join(",\n");
+	const reg = (obj) => Object.entries(obj).map(([k, v]) => "    " + JSON.stringify(k) + ": " + (Array.isArray(v) ? "[" + v.join(", ") + "]" : JSON.stringify(v))).join(",\n");
 	const parts = Object.entries(t).map(([k, v]) => "  " + JSON.stringify(k) + ": {\n" + reg(v) + "\n  }");
 	return "{\n" + parts.join(",\n") + "\n}";
 }
@@ -388,6 +388,8 @@ function buildVoice() {
 	if (sp && sp.stats.words < roughLimit(sp.stats)) L.push("- Spoken ranges are rough: built from under " + num(roughLimit(sp.stats)) + " " + sp.stats.counted_in + ".");
 	const targets = { targets: w.stats.suggested.targets };
 	if (sp) targets.targets_spoken = sp.stats.suggested.targets;
+	targets.windows = { targets: w.stats.suggested.based_on_pieces };
+	if (sp) targets.windows.targets_spoken = sp.stats.suggested.based_on_pieces;
 	L.push("```json", targetsBlock(targets), "```", "");
 	return { text: L.join("\n"), name, notes: [wp, spp] };
 }

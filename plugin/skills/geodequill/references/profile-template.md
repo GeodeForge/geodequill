@@ -73,11 +73,15 @@ samples: written <number of pieces>, about <number> words; spoken <number of pie
     "contractions_per_100w": [2, 6],
     "fillers_per_1000w": [1, 8],
     "questions_per_1000w": [2, 12]
+  },
+  "windows": {
+    "targets": 6,
+    "targets_spoken": 4
   }
 }
 ```
 ````
 
-The Targets block is read by `voice_check.py scan --profile` (written) and `scan --profile ... --register spoken` (spoken). Keys must match the names printed by `voice_check.py stats`. Each value is `[low, high]`.
+The Targets block is read by `voice_check.py scan --profile` (written) and `scan --profile ... --register spoken` (spoken). Keys must match the names printed by `voice_check.py stats`. Each value is `[low, high]`. `"windows"` holds the `based_on_pieces` count from `stats --targets` for each register: how many samples the ranges rest on. `learn` updates the ranges and these counts, and adds a Sources line such as `- the user's own edited text, learned 2026-11-07, about 240 words | written | own prose`.
 
 Reading level is `reading_lix`, from `stats`: words per sentence plus the share of words longer than six letters. Its plain names: under 30 very easy, 30 to 40 easy, 40 to 50 standard, 50 to 60 hard, 60 or more very hard. `stats` prints the plain name as `reading_level`. It is measured for Latin-script text only; leave the line out when `stats` gives none.
